@@ -54,6 +54,17 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# --- ROUTE SÉCURISÉE POUR INITIALISER LA BASE DE DONNÉES ---
+@app.route('/api/admin/init-db', methods=['POST'])
+@password_protected
+def init_db_route():
+    try:
+        with app.app_context():
+            db.create_all()
+        return jsonify({"message": "Base de données initialisée avec succès."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # --- ROUTES API (PROTÉGÉES) POUR LA GESTION ---
 @app.route('/api/servers', methods=['GET', 'POST'])
 @password_protected
