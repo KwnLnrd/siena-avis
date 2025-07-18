@@ -14,12 +14,11 @@ app = Flask(__name__)
 CORS(app) 
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES (ROBUSTE) ---
-basedir = os.path.abspath(os.path.dirname(__file__))
 database_url = os.getenv('DATABASE_URL')
-
 if database_url and database_url.startswith("postgres://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
 else:
+    basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'siena_data.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -54,14 +53,6 @@ def password_protected(f):
             return 'Accès non autorisé.', 401, {'WWW-Authenticate': 'Basic realm="Login Requis"'}
         return f(*args, **kwargs)
     return decorated_function
-
-# --- COMMANDE D'INITIALISATION DB ---
-@app.cli.command("init-db")
-def init_db_command():
-    """Crée les tables de la base de données."""
-    with app.app_context():
-        db.create_all()
-    print("Base de données initialisée.")
 
 # --- ROUTES API (PROTÉGÉES) POUR LA GESTION ---
 @app.route('/api/servers', methods=['GET', 'POST'])
@@ -123,7 +114,7 @@ def get_public_servers():
         servers = Server.query.order_by(Server.name).all()
         return jsonify([{"name": s.name} for s in servers])
     except Exception:
-        return jsonify([{"name": "Kewan"}, {"name": "Léa"}])
+        return jsonify([{"name": "Kewan (défaut)"}, {"name": "Léa (défaut)"}])
 
 @app.route('/api/public/flavors')
 def get_public_flavors():
@@ -135,7 +126,7 @@ def get_public_flavors():
             categorized_flavors[f.category].append({"id": f.id, "text": f.text})
         return jsonify(categorized_flavors)
     except Exception:
-        return jsonify({"Antipasti": [{"id": 1, "text": "Burrata al Tartufo"}]})
+        return jsonify({"Antipasti": [{"id": 1, "text": "Burrata al Tartufo (défaut)"}]})
 
 @app.route('/api/public/atmospheres')
 def get_public_atmospheres():
@@ -143,7 +134,7 @@ def get_public_atmospheres():
         atmospheres = AtmosphereOption.query.order_by(AtmosphereOption.id).all()
         return jsonify([{"id": a.id, "text": a.text} for a in atmospheres])
     except Exception:
-        return jsonify([{"id": 1, "text": "La Décoration"}])
+        return jsonify([{"id": 1, "text": "La Décoration (défaut)"}])
 
 # --- ROUTE DE GÉNÉRATION D'AVIS ET DASHBOARD ---
 @app.route('/generate-review', methods=['POST'])
@@ -186,7 +177,8 @@ def dashboard():
     except Exception as e: return jsonify({"error": f"Erreur de récupération des données : {e}"}), 500
 
 # --- INITIALISATION ET LANCEMENT ---
+with app.app_context():
+    db.create_all() 
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all() 
     app.run(port=5000, debug=True)
