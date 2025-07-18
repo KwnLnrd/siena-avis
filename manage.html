@@ -130,15 +130,12 @@
 
             async function fetchWithAuth(url, options = {}) {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // Timeout de 30 secondes
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
                 const headers = { ...options.headers, 'Authorization': 'Basic ' + btoa('admin:' + currentPassword) };
                 const response = await fetch(url, { ...options, headers, signal: controller.signal });
                 clearTimeout(timeoutId);
                 if (response.status === 401) { sessionStorage.removeItem('dashboardPassword'); throw new Error("Mot de passe incorrect."); }
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || `Erreur du serveur (status ${response.status})`);
-                }
+                if (!response.ok) throw new Error(`Erreur du serveur (status ${response.status})`);
                 return response.json();
             }
 
@@ -218,13 +215,4 @@
                     const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/${type}/${id}`;
                     if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
                         try {
-                            await fetchWithAuth(`https://siena-api.onrender.com${endpoint}`, { method: 'DELETE' });
-                            loadAllData();
-                        } catch (error) { alert(`Erreur: ${error.message}`); }
-                    }
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+                            awa
