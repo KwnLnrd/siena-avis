@@ -142,9 +142,9 @@
             async function loadAllData() {
                 try {
                     const [servers, flavors, atmospheres] = await Promise.all([
-                        fetchWithAuth('https://siena-api.onrender.com/api/servers'),
-                        fetchWithAuth('https://siena-api.onrender.com/api/options/flavors'),
-                        fetchWithAuth('https://siena-api.onrender.com/api/options/atmospheres')
+                        fetchWithAuth('https://siena-avis.onrender.com/api/servers'),
+                        fetchWithAuth('https://siena-avis.onrender.com/api/options/flavors'),
+                        fetchWithAuth('https://siena-avis.onrender.com/api/options/atmospheres')
                     ]);
                     sessionStorage.setItem('dashboardPassword', currentPassword);
                     populateList(elements.servers.list, servers, 'servers');
@@ -179,7 +179,7 @@
                 const name = elements.servers.input.value.trim();
                 if (!name) return;
                 try {
-                    await fetchWithAuth('https://siena-api.onrender.com/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    await fetchWithAuth('https://siena-avis.onrender.com/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
                     elements.servers.input.value = '';
                     loadAllData();
                 } catch (error) { alert(`Erreur: ${error.message}`); }
@@ -191,7 +191,7 @@
                 const category = elements.flavors.inputCategory.value;
                 if (!text || !category) return;
                 try {
-                    await fetchWithAuth('https://siena-api.onrender.com/api/options/flavors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, category }) });
+                    await fetchWithAuth('https://siena-avis.onrender.com/api/options/flavors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, category }) });
                     elements.flavors.inputText.value = '';
                     elements.flavors.inputCategory.value = '';
                     loadAllData();
@@ -203,7 +203,7 @@
                 const text = elements.atmospheres.input.value.trim();
                 if (!text) return;
                 try {
-                    await fetchWithAuth('https://siena-api.onrender.com/api/options/atmospheres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                    await fetchWithAuth('https://siena-avis.onrender.com/api/options/atmospheres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
                     elements.atmospheres.input.value = '';
                     loadAllData();
                 } catch (error) { alert(`Erreur: ${error.message}`); }
@@ -215,4 +215,13 @@
                     const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/${type}/${id}`;
                     if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
                         try {
-                            awa
+                            await fetchWithAuth(`https://siena-avis.onrender.com${endpoint}`, { method: 'DELETE' });
+                            loadAllData();
+                        } catch (error) { alert(`Erreur: ${error.message}`); }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

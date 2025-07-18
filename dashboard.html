@@ -125,7 +125,7 @@
 
             async function fetchAllData() {
                 try {
-                    const dashboardData = await fetchWithAuth('https://siena-api.onrender.com/dashboard');
+                    const dashboardData = await fetchWithAuth('https://siena-avis.onrender.com/dashboard');
                     sessionStorage.setItem('dashboardPassword', currentPassword);
                     populateTable(dashboardData);
                     if (window.myChart) window.myChart.destroy();
