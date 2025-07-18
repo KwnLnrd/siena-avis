@@ -216,4 +216,15 @@
                 if (e.target.classList.contains('delete-btn')) {
                     const { id, type } = e.target.dataset;
                     const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/${type}/${id}`;
-            
+                    if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+                        try {
+                            await fetchWithAuth(`https://siena-api.onrender.com${endpoint}`, { method: 'DELETE' });
+                            loadAllData();
+                        } catch (error) { alert(`Erreur: ${error.message}`); }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
