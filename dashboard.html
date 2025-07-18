@@ -125,7 +125,8 @@
 
             async function fetchAllData() {
                 try {
-                    const dashboardData = await fetchWithAuth('https://siena-avis.onrender.com/dashboard');
+                    // CORRECTION: Utilisation d'un chemin relatif pour l'appel API
+                    const dashboardData = await fetchWithAuth('/dashboard');
                     sessionStorage.setItem('dashboardPassword', currentPassword);
                     populateTable(dashboardData);
                     if (window.myChart) window.myChart.destroy();

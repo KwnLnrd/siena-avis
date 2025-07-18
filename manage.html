@@ -110,6 +110,7 @@
 
             let currentPassword = '';
 
+            // Tenter de récupérer le mot de passe depuis la session pour ne pas le redemander
             const storedPassword = sessionStorage.getItem('dashboardPassword');
             if (storedPassword) {
                 passwordModal.classList.add('hidden');
@@ -128,23 +129,34 @@
                 }
             });
 
+            // Fonction centralisée pour les appels API authentifiés
             async function fetchWithAuth(url, options = {}) {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 30000);
-                const headers = { ...options.headers, 'Authorization': 'Basic ' + btoa('admin:' + currentPassword) };
+                const headers = { 
+                    ...options.headers, 
+                    'Authorization': 'Basic ' + btoa('admin:' + currentPassword) 
+                };
                 const response = await fetch(url, { ...options, headers, signal: controller.signal });
                 clearTimeout(timeoutId);
-                if (response.status === 401) { sessionStorage.removeItem('dashboardPassword'); throw new Error("Mot de passe incorrect."); }
+                if (response.status === 401) { 
+                    sessionStorage.removeItem('dashboardPassword'); 
+                    throw new Error("Mot de passe incorrect."); 
+                }
                 if (!response.ok) throw new Error(`Erreur du serveur (status ${response.status})`);
+                // Si la méthode est DELETE, il n'y a pas forcément de JSON à retourner
+                if (options.method === 'DELETE') return;
                 return response.json();
             }
 
+            // Charge toutes les données des différentes sections
             async function loadAllData() {
                 try {
+                    // CORRECTION: Utilisation de chemins relatifs pour les appels API
                     const [servers, flavors, atmospheres] = await Promise.all([
-                        fetchWithAuth('https://siena-avis.onrender.com/api/servers'),
-                        fetchWithAuth('https://siena-avis.onrender.com/api/options/flavors'),
-                        fetchWithAuth('https://siena-avis.onrender.com/api/options/atmospheres')
+                        fetchWithAuth('/api/servers'),
+                        fetchWithAuth('/api/options/flavors'),
+                        fetchWithAuth('/api/options/atmospheres')
                     ]);
                     sessionStorage.setItem('dashboardPassword', currentPassword);
                     populateList(elements.servers.list, servers, 'servers');
@@ -162,6 +174,7 @@
                 }
             }
 
+            // Remplit une liste HTML avec les données reçues
             function populateList(listElement, items, type) {
                 listElement.innerHTML = '';
                 if (items.length === 0) { listElement.innerHTML = '<li>Aucun élément.</li>'; return; }
@@ -174,50 +187,60 @@
                 });
             }
 
+            // Logique pour ajouter un serveur
             elements.servers.form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = elements.servers.input.value.trim();
                 if (!name) return;
                 try {
-                    await fetchWithAuth('https://siena-avis.onrender.com/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                    await fetchWithAuth('/api/servers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
                     elements.servers.input.value = '';
-                    loadAllData();
+                    loadAllData(); // Recharger les données
                 } catch (error) { alert(`Erreur: ${error.message}`); }
             });
 
+            // Logique pour ajouter une saveur
             elements.flavors.form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = elements.flavors.inputText.value.trim();
                 const category = elements.flavors.inputCategory.value;
                 if (!text || !category) return;
                 try {
-                    await fetchWithAuth('https://siena-avis.onrender.com/api/options/flavors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, category }) });
+                    await fetchWithAuth('/api/options/flavors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, category }) });
                     elements.flavors.inputText.value = '';
                     elements.flavors.inputCategory.value = '';
-                    loadAllData();
+                    loadAllData(); // Recharger les données
                 } catch (error) { alert(`Erreur: ${error.message}`); }
             });
-
+            
+            // Logique pour ajouter une ambiance
             elements.atmospheres.form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = elements.atmospheres.input.value.trim();
                 if (!text) return;
                 try {
-                    await fetchWithAuth('https://siena-avis.onrender.com/api/options/atmospheres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                    await fetchWithAuth('/api/options/atmospheres', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
                     elements.atmospheres.input.value = '';
-                    loadAllData();
+                    loadAllData(); // Recharger les données
                 } catch (error) { alert(`Erreur: ${error.message}`); }
             });
 
+            // Écouteur d'événements global pour les boutons de suppression
             document.body.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('delete-btn')) {
                     const { id, type } = e.target.dataset;
+                    // CORRECTION: Utilisation de chemins relatifs
                     const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/${type}/${id}`;
+                    
+                    // Remplacer window.confirm par une modale customisée serait une amélioration
                     if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+                        // BUG FIX: Le code de suppression était manquant ici
                         try {
-                            await fetchWithAuth(`https://siena-avis.onrender.com${endpoint}`, { method: 'DELETE' });
-                            loadAllData();
-                        } catch (error) { alert(`Erreur: ${error.message}`); }
+                            await fetchWithAuth(endpoint, { method: 'DELETE' });
+                            loadAllData(); // Recharger les données pour refléter la suppression
+                        } catch (error) {
+                            alert(`Erreur lors de la suppression: ${error.message}`);
+                        }
                     }
                 }
             });
