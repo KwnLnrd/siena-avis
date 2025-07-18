@@ -14,11 +14,12 @@ app = Flask(__name__)
 CORS(app) 
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES (ROBUSTE) ---
+basedir = os.path.abspath(os.path.dirname(__file__))
 database_url = os.getenv('DATABASE_URL')
+
 if database_url and database_url.startswith("postgres://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
 else:
-    basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'siena_data.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -54,18 +55,15 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- ROUTE SÉCURISÉE POUR INITIALISER LA BASE DE DONNÉES ---
-@app.route('/api/admin/init-db', methods=['POST'])
-@password_protected
-def init_db_route():
-    try:
-        with app.app_context():
-            db.create_all()
-        return jsonify({"message": "Base de données initialisée avec succès."}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# --- COMMANDE D'INITIALISATION DB ---
+@app.cli.command("init-db")
+def init_db_command():
+    """Crée les tables de la base de données."""
+    with app.app_context():
+        db.create_all()
+    print("Base de données initialisée.")
 
-# --- ROUTES API POUR LA GESTION (PROTÉGÉES) ---
+# --- ROUTES API (PROTÉGÉES) POUR LA GESTION ---
 @app.route('/api/servers', methods=['GET', 'POST'])
 @password_protected
 def manage_servers():
