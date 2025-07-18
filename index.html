@@ -494,7 +494,7 @@
             copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(reviewText.value).then(() => { copyBtn.textContent = 'Copié !'; setTimeout(() => { copyBtn.textContent = translations[currentLang].copy_button; }, 2000); }); });
 
             async function realApiCall(tags) {
-                const apiUrl = 'https://siena-api.onrender.com/generate-review'; 
+                const apiUrl = 'https://siena-avis.onrender.com'; 
                 const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: currentLang, tags: tags }), });
                 if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
                 const data = await response.json();
