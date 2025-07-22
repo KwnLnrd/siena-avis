@@ -22,7 +22,7 @@
         .tag-group label{background-color:#F7F1E9;color:var(--text-secondary);padding:10px 18px;border-radius:10px;cursor:pointer;font-size:.9rem;font-weight:500;transition:all .3s ease;border:1px solid var(--border-color);user-select:none}
         .tag-group input:checked+label{background-color:var(--brand-color);color:#fff;transform:translateY(-2px);box-shadow:0 4px 15px rgba(191,91,63,.25);border-color:var(--brand-color)}
         
-        /* --- NOUVEAUX STYLES POUR LES OPTIONS DÉSACTIVÉES --- */
+        /* --- STYLES POUR LES OPTIONS DÉSACTIVÉES --- */
         .tag-group input[type=checkbox]:disabled + label {
             cursor: not-allowed;
             background-color: #F7F1E9;
@@ -78,7 +78,7 @@
         #notification { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #2C2C2C; color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 2000; opacity: 0; animation: fadeIn 0.5s forwards; }
         #notification.fade-out { animation: fadeOut 0.5s forwards; }
         
-        /* --- NOUVEAU STYLE POUR LES MESSAGES DE LIMITE --- */
+        /* --- STYLE POUR LES MESSAGES DE LIMITE --- */
         .limit-notification {
             color: var(--brand-color);
             font-size: 0.9rem;
@@ -308,176 +308,4 @@
                     quick_review_prompt: "Com pressa? Deixe uma avaliação em 30 segundos",
                     quick_review_prompt_detailed: "Mostrar mais opções para uma avaliação detalhada",
                     quick_review_highlight_title: "O destaque da sua visita",
-                    highlight_service: "Serviço atencioso", highlight_atmosphere: "Ambiente festivo", highlight_cocktails: "Cocktails criativos", highlight_decor: "Decoração chique", highlight_products: "Qualidade dos produtos", highlight_evening: "Noite ótima",
-                    occasion_title: "Uma ocasião especial?", occasion_birthday: "Aniversário", occasion_romantic: "Jantar romântico", occasion_friends: "Jantar entre amigos", occasion_visit: "Simples visita", birthday_who: "De quem era o aniversário?", birthday_father: "Pai", birthday_mother: "Mãe", birthday_husband: "Marido", birthday_wife: "Esposa", birthday_son: "Filho", birthday_daughter: "Filha", birthday_friend: "Amigo(a)", server_title: "Qual empregado gostaria de elogiar?", server_choose: "-- Escolha um nome --", service_subtitle: "O que apreciou particularmente? (máx. 3 opções)", service_q1: "Atencioso", service_q2: "Sorridente", service_q3: "Profissional", service_q4: "Eficiente", service_q5: "Bons conselhos", service_q6: "Discreto", flavors_title: "Os sabores que o marcaram", flavors_subtitle: "Escolha até 6 dos seu
-            };
-            
-            // --- LOGIQUE DE TRADUCTION ET INITIALISATION ---
-            let currentLang = 'fr';
-            const getTranslation = (key, ...args) => {
-                const value = translations[currentLang][key] || translations['fr'][key];
-                return typeof value === 'function' ? value(...args) : value;
-            };
-
-            const translatePage = () => {
-                document.title = getTranslation('page_title');
-                document.querySelectorAll('[data-translate-key]').forEach(el => {
-                    const key = el.dataset.translateKey;
-                    if (el.tagName === 'TEXTAREA' && el.placeholder) {
-                        el.placeholder = getTranslation(key);
-                    } else {
-                        el.innerHTML = getTranslation(key);
-                    }
-                });
-                // Mettre à jour les messages de limite si visibles
-                document.querySelectorAll('.limit-notification:not(.hidden)').forEach(el => {
-                    const group = el.closest('.tag-section').querySelector('[data-category]');
-                    const category = group.dataset.category;
-                    const limit = getLimitForCategory(category);
-                    if (limit) {
-                        el.textContent = getTranslation('limit_reached', limit);
-                    }
-                });
-            };
-            
-            // --- GESTION DES LIMITES DE SÉLECTION ---
-            const getLimitForCategory = (category) => {
-                const limits = {
-                    'service_qualities': 3,
-                    'dish': 6,
-                    'atmosphere': 3,
-                    'quick_highlight': 3 
-                };
-                return limits[category];
-            };
-
-            const initializeCheckboxGroup = (category) => {
-                const limit = getLimitForCategory(category);
-                if (!limit) return;
-
-                const section = document.querySelector(`[data-category="${category}"]`).closest('.tag-section');
-                if (!section) return;
-                
-                const container = section.querySelector(`[data-category="${category}"]`);
-                const notificationEl = section.querySelector('.limit-notification');
-                
-                const updateLimitState = () => {
-                    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-                    const checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
-                    const limitReached = checkedCount >= limit;
-
-                    checkboxes.forEach(cb => {
-                        if (!cb.checked) {
-                            cb.disabled = limitReached;
-                        }
-                    });
-
-                    if (notificationEl) {
-                        if (limitReached) {
-                            notificationEl.textContent = getTranslation('limit_reached', limit);
-                            notificationEl.classList.remove('hidden');
-                        } else {
-                            notificationEl.classList.add('hidden');
-                        }
-                    }
-                };
-
-                container.addEventListener('change', (event) => {
-                    if (event.target.type === 'checkbox') {
-                        updateLimitState();
-                    }
-                });
-                
-                updateLimitState(); // Check initial state
-            };
-
-
-            // --- LOGIQUE PRINCIPALE ---
-            const form = document.getElementById('review-form');
-            const serverSelect = document.getElementById('server-select');
-            const serverSelectExpress = document.getElementById('server-select-express');
-            const serviceQualitiesContainer = document.getElementById('service-qualities-container');
-            const birthdayEventRadio = document.getElementById('event_birthday');
-            const birthdayDetailsContainer = document.getElementById('birthday_details_container');
-            const copyBtn = document.getElementById('copy-btn');
-            const reviewText = document.getElementById('review-text');
-            const generateBtn = document.getElementById('generate-btn');
-            const loader = document.getElementById('loader');
-            const loaderText = document.getElementById('loader-text');
-            const resultArea = document.getElementById('result-area');
-            const thankYouMessage = document.getElementById('thank-you-message');
-            const notification = document.getElementById('notification');
-            const quickReviewToggle = document.getElementById('quick-review-toggle');
-            const detailedReviewSection = document.getElementById('detailed-review-section');
-            const quickReviewSection = document.getElementById('quick-review-section');
-            const privateFeedbackToggle = document.getElementById('toggle-private-feedback');
-            const privateFeedbackContainer = document.getElementById('private-feedback-container');
-
-            let isQuickReviewMode = false;
-
-            // ... (le reste du code JavaScript reste identique)
-
-            async function fetchPublicData() {
-                try {
-                    const response = await fetch('https://siena-avis.onrender.com/api/public/data');
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    const data = await response.json();
-
-                    // Populate servers
-                    const servers = data.servers || [];
-                    [serverSelect, serverSelectExpress].forEach(select => {
-                        select.innerHTML = `<option value="" data-translate-key="server_choose">${getTranslation('server_choose')}</option>`;
-                        servers.forEach(server => {
-                            select.innerHTML += `<option value="${server.name}">${server.name}</option>`;
-                        });
-                    });
-
-                    // Populate flavors (dishes)
-                    const flavors = data.flavors || {};
-                    const dishesContent = document.getElementById('dishes-content');
-                    let dishesHTML = '';
-                    for (const category in flavors) {
-                        if (category !== 'Ambiance') {
-                            dishesHTML += `<h4 class="dish-subcategory">${category}</h4><div class="tag-group" data-category="dish">`;
-                            flavors[category].forEach(flavor => {
-                                dishesHTML += `<input type="checkbox" id="dish_${flavor.id}" value="${flavor.text}"><label for="dish_${flavor.id}">${flavor.text}</label>`;
-                            });
-                            dishesHTML += `</div>`;
-                        }
-                    }
-                    dishesContent.innerHTML = dishesHTML;
-                    
-                    // Populate atmospheres
-                    const atmospheres = flavors['Ambiance'] || [];
-                    const atmospheresContent = document.getElementById('atmospheres-content');
-                    let atmosphereHTML = '';
-                    atmospheres.forEach(atmosphere => {
-                        atmosphereHTML += `<input type="checkbox" id="atm_${atmosphere.id}" value="${atmosphere.text}"><label for="atm_${atmosphere.id}">${atmosphere.text}</label>`;
-                    });
-                    atmospheresContent.innerHTML = atmosphereHTML;
-
-                    // Initialize checkbox limits for dynamic content
-                    initializeCheckboxGroup('dish');
-                    initializeCheckboxGroup('atmosphere');
-
-                } catch (error) {
-                    console.error('Failed to fetch public data:', error);
-                    document.getElementById('dishes-content').innerHTML = '<p>Erreur de chargement des options.</p>';
-                }
-            }
-
-            // ... (le reste du code JavaScript reste identique)
-
-            // Initialize static checkbox groups
-            initializeCheckboxGroup('service_qualities');
-            initializeCheckboxGroup('quick_highlight');
-            
-            // Initial translation and data fetch
-            const initialLang = window.location.hash.substring(1) || 'fr';
-            switchLanguage(initialLang);
-            fetchPublicData();
-        });
-
-    </script>
-</body>
-</html>
+                    highlight_service: "Serviço atencioso", highlight_atmosphere: "Ambiente festivo", hig
