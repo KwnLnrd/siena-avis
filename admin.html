@@ -445,7 +445,7 @@
                 return `<li>
                             <span>${text}${category}</span>
                             <div class="item-actions">
-                                <button class="action-btn edit-btn" data-id="${item.id}" data-name="${item.name || ''}" data-text="${item.text || ''}" data-category="${item.category || ''}" title="Éditer">✎</button>
+                                <button class="action-btn edit-btn" data-id="${item.id}" data-type="${type}" data-name="${item.name || ''}" data-text="${item.text || ''}" data-category="${item.category || ''}" title="Éditer">✎</button>
                                 <button class="action-btn delete-btn" data-id="${item.id}" data-type="${type}" title="Supprimer">×</button>
                             </div>
                         </li>`;
@@ -511,7 +511,7 @@
                     manage.servers.btn.textContent = 'Enregistrer les modifications';
                     manage.servers.btn.classList.add('edit-mode');
                     manage.servers.nameInput.focus();
-                } else {
+                } else if (type === 'flavors') {
                     resetServerForm();
                     manage.flavors.idInput.value = id;
                     manage.flavors.textInput.value = target.dataset.text;
