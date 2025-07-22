@@ -152,11 +152,17 @@ def get_public_data():
     try:
         servers = Server.query.order_by(Server.name).all()
         flavors = FlavorOption.query.all()
+        
         flavors_by_category = {}
         for f in flavors:
             if f.category not in flavors_by_category:
                 flavors_by_category[f.category] = []
             flavors_by_category[f.category].append({"id": f.id, "text": f.text})
+            
+        # Modification: Ne plus envoyer la catégorie 'Ambiance' car elle est gérée en dur côté client.
+        if 'Ambiance' in flavors_by_category:
+            del flavors_by_category['Ambiance']
+            
         data = {
             "servers": [{"id": s.id, "name": s.name} for s in servers],
             "flavors": flavors_by_category,

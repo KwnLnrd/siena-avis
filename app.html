@@ -44,7 +44,28 @@
         .button.secondary{background:var(--surface-color);color:var(--brand-color);border-color:var(--border-color);margin-top:12px}
         .button.secondary:hover{border-color:var(--brand-color)}
         #google-btn{margin-top:12px}
-        .hidden{display:none !important}
+        
+        /* --- MODIFICATION: Transition douce pour les sections d'avis --- */
+        .hidden {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            border-width: 0 !important;
+            visibility: hidden;
+            transform: translateY(10px);
+        }
+        #detailed-review-section, #quick-review-section {
+            transition: all 0.4s ease-in-out;
+            max-height: 2000px; /* Hauteur suffisante pour le contenu */
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
         .loader-container{display:flex;flex-direction:column;align-items:center;gap:15px;margin:20px auto}
         .loader{width:40px;height:40px;border:4px solid var(--border-color);border-left-color:var(--brand-color);border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
@@ -101,8 +122,9 @@
 </head>
 <body>
     <div class="review-container">
+        <!-- MODIFICATION: Sélecteur de langue intégré -->
         <div class="language-switcher">
-            <button class="lang-btn" data-lang="fr">🇫🇷 FR</button>
+            <button class="lang-btn active" data-lang="fr">🇫🇷 FR</button>
             <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
             <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
             <button class="lang-btn" data-lang="it">🇮🇹 IT</button>
@@ -110,7 +132,8 @@
             <button class="lang-btn" data-lang="zh">🇨🇳 ZH</button>
         </div>
         <div class="logo-container">
-            <a href="index.html">
+            <!-- MODIFICATION: Lien href retiré pour éviter la navigation -->
+            <a href="#">
                 <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
             </a>
         </div>
@@ -174,7 +197,14 @@
                     <h3 data-translate-key="atmosphere_title"></h3>
                     <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
                     <p class="limit-notification hidden"></p>
+                    <!-- MODIFICATION: Options d'atmosphère en dur -->
                     <div class="tag-group" data-category="atmosphere" id="atmospheres-content">
+                        <input type="checkbox" id="atm_deco" value="La Décoration"><label for="atm_deco" data-translate-key="atmosphere_decoration"></label>
+                        <input type="checkbox" id="atm_music" value="La Musique Live"><label for="atm_music" data-translate-key="atmosphere_music"></label>
+                        <input type="checkbox" id="atm_energy" value="L'Énergie Festive"><label for="atm_energy" data-translate-key="atmosphere_energy"></label>
+                        <input type="checkbox" id="atm_light" value="L'Éclairage Intime"><label for="atm_light" data-translate-key="atmosphere_lighting"></label>
+                        <input type="checkbox" id="atm_comfort" value="Le Confort"><label for="atm_comfort" data-translate-key="atmosphere_comfort"></label>
+                        <input type="checkbox" id="atm_photo" value="Idéal pour les photos"><label for="atm_photo" data-translate-key="atmosphere_photo"></label>
                     </div>
                 </div>
             </div>
@@ -468,8 +498,12 @@
                     const flavors = data.flavors || {};
                     const dishesContent = document.getElementById('dishes-content');
                     dishesContent.innerHTML = '';
-                    for (const category in flavors) {
-                        if (category !== 'Ambiance') {
+                    
+                    // MODIFICATION: Ordre d'affichage des catégories de plats
+                    const categoryOrder = ['Antipasti', 'Crudo', 'Insalate', 'Pâtes', 'Pizze', 'Viandes', 'Poissons', 'Douceurs'];
+                    
+                    categoryOrder.forEach(category => {
+                        if (flavors[category]) {
                             let subcategoryHTML = `<h4 class="dish-subcategory">${category}</h4><div class="tag-group">`;
                             flavors[category].forEach(flavor => {
                                 subcategoryHTML += `<input type="checkbox" id="dish_${flavor.id}" value="${flavor.text}"><label for="dish_${flavor.id}">${flavor.text}</label>`;
@@ -477,13 +511,6 @@
                             subcategoryHTML += `</div>`;
                             dishesContent.innerHTML += subcategoryHTML;
                         }
-                    }
-                    
-                    const atmospheres = flavors['Ambiance'] || [];
-                    const atmospheresContent = document.getElementById('atmospheres-content');
-                    atmospheresContent.innerHTML = '';
-                    atmospheres.forEach(atmosphere => {
-                        atmospheresContent.innerHTML += `<input type="checkbox" id="atm_${atmosphere.id}" value="${atmosphere.text}"><label for="atm_${atmosphere.id}">${atmosphere.text}</label>`;
                     });
 
                     initializeCheckboxGroup('dish');
@@ -604,6 +631,7 @@
             initializeCheckboxGroup('service_qualities');
             initializeCheckboxGroup('quick_highlight');
             
+            // MODIFICATION: Langue par défaut sur 'fr' si aucun hash n'est présent
             const initialLang = window.location.hash.substring(1) || 'fr';
             switchLanguage(initialLang);
             fetchPublicData();
