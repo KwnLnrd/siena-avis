@@ -12,7 +12,10 @@ from functools import wraps
 # --- CONFIGURATION INITIALE ---
 load_dotenv()
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", "http://127.0.0.1:5500", "http://localhost:5500", "null"]}})
+
+# CORRECTION : Mise à jour de la configuration CORS pour gérer correctement les requêtes
+# de pré-vérification (preflight) et autoriser les en-têtes d'authentification.
+CORS(app, supports_credentials=True)
 
 # --- CLIENT OPENAI ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -35,7 +38,6 @@ class GeneratedReview(db.Model):
     server_name = db.Column(db.String(80), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-# CORRECTION : Le nom de la table est géré par défaut par SQLAlchemy, ce qui correspond à son état fonctionnel.
 class Server(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -56,7 +58,6 @@ class InternalFeedback(db.Model):
     __tablename__ = 'internal_feedback'
     id = db.Column(db.Integer, primary_key=True)
     feedback_text = db.Column(db.Text, nullable=False)
-    # La clé étrangère pointe vers 'server.id', le nom de table par défaut pour le modèle Server.
     associated_server_id = db.Column(db.Integer, db.ForeignKey('server.id', ondelete='SET NULL'), nullable=True)
     status = db.Column(db.Text, nullable=False, default='new')
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
@@ -78,9 +79,74 @@ def password_protected(f):
     return decorated_function
 
 # --- ROUTES DE GESTION ---
-# ... (les routes de gestion existantes restent inchangées) ...
+@app.route('/api/servers', methods=['GET', 'POST'])
+@password_protected
+def manage_servers():
+    if request.method == 'POST':
+        data = request.get_json()
+        if not data or not data.get('name'): return jsonify({"error": "Nom manquant."}), 400
+        new_server = Server(name=data['name'].strip().title())
+        db.session.add(new_server)
+        db.session.commit()
+        return jsonify({"id": new_server.id, "name": new_server.name}), 201
+    servers = Server.query.order_by(Server.name).all()
+    return jsonify([{"id": s.id, "name": s.name} for s in servers])
 
-# --- ROUTE DE GÉNÉRATION D'AVIS (MISE À JOUR) ---
+@app.route('/api/servers/<int:server_id>', methods=['DELETE'])
+@password_protected
+def delete_server(server_id):
+    server = db.session.get(Server, server_id)
+    if not server: return jsonify({"error": "Serveur non trouvé."}), 404
+    GeneratedReview.query.filter_by(server_name=server.name).delete()
+    db.session.delete(server)
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/options/flavors', methods=['GET', 'POST'])
+@password_protected
+def manage_flavors():
+    if request.method == 'POST':
+        data = request.get_json()
+        if not data or not data.get('text') or not data.get('category'):
+            return jsonify({"error": "Données manquantes."}), 400
+        new_option = FlavorOption(text=data['text'].strip(), category=data['category'].strip())
+        db.session.add(new_option)
+        db.session.commit()
+        return jsonify({"id": new_option.id, "text": new_option.text, "category": new_option.category}), 201
+    options = FlavorOption.query.all()
+    return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
+
+@app.route('/api/options/flavors/<int:option_id>', methods=['DELETE'])
+@password_protected
+def delete_flavor(option_id):
+    option = db.session.get(FlavorOption, option_id)
+    if not option: return jsonify({"error": "Option non trouvée."}), 404
+    db.session.delete(option)
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+# --- ROUTES API PUBLIQUES ---
+@app.route('/api/public/data', methods=['GET'])
+def get_public_data():
+    try:
+        servers = Server.query.order_by(Server.name).all()
+        flavors = FlavorOption.query.all()
+        flavors_by_category = {}
+        for f in flavors:
+            if f.category not in flavors_by_category:
+                flavors_by_category[f.category] = []
+            flavors_by_category[f.category].append({"id": f.id, "text": f.text})
+        data = {
+            "servers": [{"id": s.id, "name": s.name} for s in servers],
+            "flavors": flavors_by_category,
+        }
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur lors de la récupération des données publiques : {e}")
+        return jsonify({"error": "Impossible de charger les données de configuration."}), 500
+
+# --- ROUTE DE GÉNÉRATION D'AVIS ---
 @app.route('/generate-review', methods=['POST'])
 def generate_review():
     data = request.get_json()
@@ -157,8 +223,22 @@ def generate_review():
         print(f"Erreur OpenAI ou DB: {e}")
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ENDPOINTS DE GESTION DU FEEDBACK ---
+# --- ROUTES DU DASHBOARD ---
+@app.route('/dashboard')
+@password_protected
+def dashboard_data():
+    try:
+        results = db.session.query(
+            GeneratedReview.server_name, 
+            func.count(GeneratedReview.id).label('review_count')
+        ).group_by(GeneratedReview.server_name).order_by(func.count(GeneratedReview.id).desc()).all()
+        data = [{"server": server, "count": count} for server, count in results]
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur du dashboard: {e}")
+        return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
 
+# --- ENDPOINTS DE GESTION DU FEEDBACK ---
 @app.route('/api/internal-feedback', methods=['GET'])
 @password_protected
 def get_internal_feedback():
@@ -193,4 +273,64 @@ def get_internal_feedback():
         print(f"Erreur dans /api/internal-feedback: {e}")
         return jsonify({"error": "Impossible de charger les feedbacks."}), 500
 
-# ... (le reste des routes reste inchangé) ...
+@app.route('/api/internal-feedback/<int:feedback_id>/status', methods=['PUT'])
+@password_protected
+def update_feedback_status(feedback_id):
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status or new_status not in ['read', 'archived', 'new']:
+        return jsonify({"error": "Statut invalide."}), 400
+
+    feedback = db.session.get(InternalFeedback, feedback_id)
+    if not feedback:
+        return jsonify({"error": "Feedback non trouvé."}), 404
+
+    try:
+        feedback.status = new_status
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Feedback {feedback_id} mis à jour à '{new_status}'."})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erreur de mise à jour du statut du feedback: {e}")
+        return jsonify({"error": "Erreur lors de la mise à jour du statut."}), 500
+
+# --- ROUTE PERFORMANCE DU MENU ---
+@app.route('/api/menu-performance')
+@password_protected
+def menu_performance_data():
+    period = request.args.get('period', 'all')
+    
+    try:
+        query = db.session.query(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category,
+            func.count(MenuSelection.id).label('selection_count')
+        )
+
+        if period == '7days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
+        elif period == '30days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
+        
+        results = query.group_by(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category
+        ).order_by(
+            func.count(MenuSelection.id).desc()
+        ).all()
+
+        data = [{
+            "dish_name": name,
+            "dish_category": category,
+            "selection_count": count
+        } for name, category, count in results]
+        
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur dans /api/menu-performance: {e}")
+        return jsonify({"error": "Une erreur est survenue lors du chargement des données de performance."}), 500
+
+# --- POINT D'ENTRÉE POUR RENDER ---
+if __name__ == '__main__':
+    app.run(debug=False)
