@@ -11,11 +11,9 @@ from functools import wraps
 # --- CONFIGURATION INITIALE ---
 load_dotenv()
 app = Flask(__name__)
-# Permettre les requêtes depuis votre domaine Netlify et en local pour les tests
 CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", "http://127.0.0.1:5500", "http://localhost:5500", "null"]}})
 
 # --- CLIENT OPENAI ---
-# Assurez-vous que la variable d'environnement OPENAI_API_KEY est définie sur Render
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES ---
@@ -23,12 +21,10 @@ database_url = os.getenv('DATABASE_URL')
 if database_url and database_url.startswith("postgres://"):
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
 else:
-    # Fallback pour le développement local
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'siena_data.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# Assurez-vous que la variable d'environnement DASHBOARD_PASSWORD est définie sur Render
 DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'siena_secret_password')
 db = SQLAlchemy(app)
 
@@ -47,13 +43,9 @@ class FlavorOption(db.Model):
     text = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
 
-class AtmosphereOption(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(100), unique=True, nullable=False)
+# Le modèle AtmosphereOption a été supprimé
 
-# --- CORRECTION MAJEURE : INITIALISATION DE LA BASE DE DONNÉES ---
-# Cette instruction s'assure que les tables sont créées au démarrage de l'application.
-# C'est la correction la plus probable pour l'erreur 500 que vous rencontriez.
+# --- INITIALISATION DE LA BASE DE DONNÉES ---
 with app.app_context():
     db.create_all()
 
@@ -67,10 +59,9 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- COMMANDE D'INITIALISATION DB (conservée pour usage manuel si besoin) ---
+# --- COMMANDE D'INITIALISATION DB ---
 @app.cli.command("init-db")
 def init_db_command():
-    """Crée les tables et ajoute des données de base."""
     db.create_all()
     if not Server.query.first():
         db.session.add_all([Server(name='Kewan'), Server(name='Camille')])
@@ -101,56 +92,38 @@ def delete_server(server_id):
     db.session.commit()
     return jsonify({"success": True})
 
-@app.route('/api/options/<option_type>', methods=['GET', 'POST'])
+@app.route('/api/options/flavors', methods=['GET', 'POST'])
 @password_protected
-def manage_options(option_type):
-    MODELS = {'flavors': FlavorOption, 'atmospheres': AtmosphereOption}
-    Model = MODELS.get(option_type)
-    if not Model: return jsonify({"error": "Type d'option invalide"}), 404
-    
+def manage_flavors():
+    Model = FlavorOption
     if request.method == 'POST':
         data = request.get_json()
-        if not data or not data.get('text'): return jsonify({"error": "Texte manquant."}), 400
-        new_option_data = {'text': data['text'].strip()}
-        if option_type == 'flavors':
-            if not data.get('category'): return jsonify({"error": "Catégorie manquante."}), 400
-            new_option_data['category'] = data['category'].strip()
-        new_option = Model(**new_option_data)
+        if not data or not data.get('text') or not data.get('category'):
+            return jsonify({"error": "Données manquantes."}), 400
+        new_option = Model(text=data['text'].strip(), category=data['category'].strip())
         db.session.add(new_option)
         db.session.commit()
-        result = {"id": new_option.id, "text": new_option.text}
-        if option_type == 'flavors': result['category'] = new_option.category
-        return jsonify(result), 201
-
-    options = Model.query.all()
-    if option_type == 'flavors':
-        return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
-    return jsonify([{"id": opt.id, "text": opt.text} for opt in options])
-
-@app.route('/api/options/<option_type>/<int:option_id>', methods=['DELETE'])
-@password_protected
-def delete_option(option_type, option_id):
-    MODELS = {'flavors': FlavorOption, 'atmospheres': AtmosphereOption}
-    Model = MODELS.get(option_type)
-    if not Model: return jsonify({"error": "Type d'option invalide"}), 404
+        return jsonify({"id": new_option.id, "text": new_option.text, "category": new_option.category}), 201
     
-    option = db.session.get(Model, option_id)
+    options = Model.query.all()
+    return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
+
+@app.route('/api/options/flavors/<int:option_id>', methods=['DELETE'])
+@password_protected
+def delete_flavor(option_id):
+    option = db.session.get(FlavorOption, option_id)
     if not option: return jsonify({"error": "Option non trouvée."}), 404
     db.session.delete(option)
     db.session.commit()
     return jsonify({"success": True})
 
-# --- NOUVEAU : ROUTES API PUBLIQUES POUR LA PAGE D'AVIS (app.html) ---
-# Ces routes permettent à la page de génération d'avis de charger les options
-# dynamiquement sans nécessiter de mot de passe.
+# --- ROUTES API PUBLIQUES ---
 @app.route('/api/public/data', methods=['GET'])
 def get_public_data():
     try:
         servers = Server.query.order_by(Server.name).all()
         flavors = FlavorOption.query.all()
-        atmospheres = AtmosphereOption.query.all()
 
-        # Regrouper les saveurs par catégorie pour un affichage facile
         flavors_by_category = {}
         for f in flavors:
             if f.category not in flavors_by_category:
@@ -160,20 +133,18 @@ def get_public_data():
         data = {
             "servers": [{"id": s.id, "name": s.name} for s in servers],
             "flavors": flavors_by_category,
-            "atmospheres": [{"id": a.id, "text": a.text} for a in atmospheres]
+            # La clé "atmospheres" n'est plus envoyée
         }
         return jsonify(data)
     except Exception as e:
         print(f"Erreur lors de la récupération des données publiques : {e}")
         return jsonify({"error": "Impossible de charger les données de configuration."}), 500
 
-
 # --- ROUTE DE GÉNÉRATION D'AVIS ---
 @app.route('/generate-review', methods=['POST'])
 def generate_review():
     data = request.get_json()
-    if not data:
-        return jsonify({"error": "Données invalides."}), 400
+    if not data: return jsonify({"error": "Données invalides."}), 400
         
     lang = data.get('lang', 'fr')
     tags = data.get('tags', [])
@@ -194,7 +165,6 @@ def generate_review():
     
     prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
     for category, values in details.items():
-        # Ne pas inclure le nom du serveur dans le prompt pour éviter la redondance
         if category != 'server_name':
             prompt_text += f"- {category}: {', '.join(values)}\n"
     prompt_text += "\nL'avis doit faire environ 4-6 phrases. Varie le style pour ne pas être répétitif."
@@ -233,6 +203,4 @@ def dashboard_data():
 
 # --- POINT D'ENTRÉE POUR RENDER ---
 if __name__ == '__main__':
-    # Le port est géré par gunicorn sur Render, debug=False en production
     app.run(debug=False)
-
