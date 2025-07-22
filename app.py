@@ -17,22 +17,13 @@ CORS(app, supports_credentials=True)
 # --- CLIENT OPENAI ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --- CONFIGURATION DE LA BASE DE DONNÉES (LOGIQUE CORRIGÉE) ---
+# --- CONFIGURATION DE LA BASE DE DONNÉES ---
 database_url = os.getenv('DATABASE_URL')
-
-# Si DATABASE_URL n'est pas défini sur Render, l'application ne pourra pas démarrer.
-# C'est le comportement souhaité pour éviter d'utiliser une base de données temporaire.
 if not database_url:
     raise RuntimeError("DATABASE_URL is not set. Please set it in your Render environment variables.")
-
-# Remplacer postgres:// par postgresql:// si nécessaire pour la compatibilité
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
-
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-# Affiche l'URL de la base de données dans les logs de Render pour confirmation
-print(f"INFO: Connecting to database at {database_url}")
-
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'siena_secret_password')
 db = SQLAlchemy(app)
@@ -68,7 +59,6 @@ class InternalFeedback(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     server = db.relationship('Server')
 
-
 # --- INITIALISATION DE LA BASE DE DONNÉES ---
 with app.app_context():
     db.create_all()
@@ -97,15 +87,27 @@ def manage_servers():
     servers = Server.query.order_by(Server.name).all()
     return jsonify([{"id": s.id, "name": s.name} for s in servers])
 
-@app.route('/api/servers/<int:server_id>', methods=['DELETE'])
+@app.route('/api/servers/<int:server_id>', methods=['PUT', 'DELETE'])
 @password_protected
-def delete_server(server_id):
+def handle_server(server_id):
     server = db.session.get(Server, server_id)
-    if not server: return jsonify({"error": "Serveur non trouvé."}), 404
-    GeneratedReview.query.filter_by(server_name=server.name).delete()
-    db.session.delete(server)
-    db.session.commit()
-    return jsonify({"success": True})
+    if not server:
+        return jsonify({"error": "Serveur non trouvé."}), 404
+
+    if request.method == 'PUT':
+        data = request.get_json()
+        if not data or not data.get('name'):
+            return jsonify({"error": "Nom du serveur manquant."}), 400
+        server.name = data['name'].strip().title()
+        db.session.commit()
+        return jsonify({"id": server.id, "name": server.name})
+
+    if request.method == 'DELETE':
+        GeneratedReview.query.filter_by(server_name=server.name).delete()
+        db.session.delete(server)
+        db.session.commit()
+        return jsonify({"success": True})
+
 
 @app.route('/api/options/flavors', methods=['GET', 'POST'])
 @password_protected
@@ -121,14 +123,27 @@ def manage_flavors():
     options = FlavorOption.query.all()
     return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
 
-@app.route('/api/options/flavors/<int:option_id>', methods=['DELETE'])
+
+@app.route('/api/options/flavors/<int:option_id>', methods=['PUT', 'DELETE'])
 @password_protected
-def delete_flavor(option_id):
+def handle_flavor(option_id):
     option = db.session.get(FlavorOption, option_id)
-    if not option: return jsonify({"error": "Option non trouvée."}), 404
-    db.session.delete(option)
-    db.session.commit()
-    return jsonify({"success": True})
+    if not option:
+        return jsonify({"error": "Option non trouvée."}), 404
+
+    if request.method == 'PUT':
+        data = request.get_json()
+        if not data or not data.get('text') or not data.get('category'):
+            return jsonify({"error": "Données de l'option manquantes."}), 400
+        option.text = data['text'].strip()
+        option.category = data['category'].strip()
+        db.session.commit()
+        return jsonify({"id": option.id, "text": option.text, "category": option.category})
+
+    if request.method == 'DELETE':
+        db.session.delete(option)
+        db.session.commit()
+        return jsonify({"success": True})
 
 
 # --- ROUTES API PUBLIQUES ---
@@ -209,11 +224,9 @@ def generate_review():
         prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
         
         for category, values in details.items():
-            # Exclure le nom du serveur de cette liste générique pour le traiter séparément
             if category != 'server_name':
                 prompt_text += f"- {category}: {', '.join(values)}\n"
         
-        # Ajouter une instruction spécifique pour le serveur si son nom a été sélectionné
         if server_name:
             prompt_text += f"\nL'avis doit mentionner le service impeccable de {server_name}.\n"
 
@@ -255,7 +268,6 @@ def dashboard_data():
 @password_protected
 def get_internal_feedback():
     status_filter = request.args.get('status', 'new')
-    
     try:
         query = db.session.query(
             InternalFeedback,
@@ -267,9 +279,7 @@ def get_internal_feedback():
         ).order_by(
             desc(InternalFeedback.created_at)
         )
-
         results = query.all()
-
         feedbacks = []
         for feedback, server_name in results:
             feedbacks.append({
@@ -279,7 +289,6 @@ def get_internal_feedback():
                 "created_at": feedback.created_at.isoformat(),
                 "server_name": server_name if server_name else "Non spécifié"
             })
-            
         return jsonify(feedbacks)
     except Exception as e:
         print(f"Erreur dans /api/internal-feedback: {e}")
@@ -290,14 +299,11 @@ def get_internal_feedback():
 def update_feedback_status(feedback_id):
     data = request.get_json()
     new_status = data.get('status')
-
     if not new_status or new_status not in ['read', 'archived', 'new']:
         return jsonify({"error": "Statut invalide."}), 400
-
     feedback = db.session.get(InternalFeedback, feedback_id)
     if not feedback:
         return jsonify({"error": "Feedback non trouvé."}), 404
-
     try:
         feedback.status = new_status
         db.session.commit()
@@ -312,37 +318,32 @@ def update_feedback_status(feedback_id):
 @password_protected
 def menu_performance_data():
     period = request.args.get('period', 'all')
-    
     try:
         query = db.session.query(
             MenuSelection.dish_name,
             MenuSelection.dish_category,
             func.count(MenuSelection.id).label('selection_count')
         )
-
         if period == '7days':
             query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
         elif period == '30days':
             query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
-        
         results = query.group_by(
             MenuSelection.dish_name,
             MenuSelection.dish_category
         ).order_by(
             func.count(MenuSelection.id).desc()
         ).all()
-
         data = [{
             "dish_name": name,
             "dish_category": category,
             "selection_count": count
         } for name, category, count in results]
-        
         return jsonify(data)
     except Exception as e:
-        print(f"Erreur dans /api/menu-performance: {e}")
-        return jsonify({"error": "Une erreur est survenue lors du chargement des données de performance."}), 500
+        print(f"Erreur performance menu: {e}")
+        return jsonify({"error": "Impossible de charger les données de performance."}), 500
 
-# --- POINT D'ENTRÉE POUR RENDER ---
 if __name__ == '__main__':
-    app.run(debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

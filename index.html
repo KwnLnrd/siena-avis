@@ -15,7 +15,17 @@
         .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .button-grid a { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 16px 10px; background-color: #F7F1E9; color: var(--text-primary); border-radius: 10px; border: 1px solid #EAE0D5; transition: all 0.3s ease; font-weight: 500; font-size: 1rem; }
         .button-grid a:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(191, 91, 63, 0.2); border-color: var(--brand-color); background-color: var(--brand-color); color: white; }
-        @media (max-width: 640px) { .lang-selector { padding: 30px 25px; } h1 { font-size: 2rem; } .button-grid { grid-template-columns: repeat(2, 1fr); } }
+        
+        /* --- AMÉLIORATION RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .button-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 480px) { 
+            .lang-selector { padding: 30px 25px; } 
+            h1 { font-size: 2rem; } 
+            /* Passage à une seule colonne sur les petits écrans */
+            .button-grid { grid-template-columns: 1fr; } 
+        }
     </style>
 </head>
 <body>
