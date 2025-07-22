@@ -12,7 +12,7 @@ from functools import wraps
 load_dotenv()
 app = Flask(__name__)
 # Permettre les requêtes depuis votre domaine Netlify et en local pour les tests
-CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", "http://127.0.0.1:5500", "null"]}})
+CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", "http://127.0.0.1:5500", "http://localhost:5500", "null"]}})
 
 # --- CLIENT OPENAI ---
 # Assurez-vous que la variable d'environnement OPENAI_API_KEY est définie sur Render
@@ -51,6 +51,12 @@ class AtmosphereOption(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(100), unique=True, nullable=False)
 
+# --- CORRECTION MAJEURE : INITIALISATION DE LA BASE DE DONNÉES ---
+# Cette instruction s'assure que les tables sont créées au démarrage de l'application.
+# C'est la correction la plus probable pour l'erreur 500 que vous rencontriez.
+with app.app_context():
+    db.create_all()
+
 # --- SÉCURISATION ---
 def password_protected(f):
     @wraps(f)
@@ -61,12 +67,11 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- COMMANDE D'INITIALISATION DB ---
+# --- COMMANDE D'INITIALISATION DB (conservée pour usage manuel si besoin) ---
 @app.cli.command("init-db")
 def init_db_command():
-    """Crée les tables de la base de données et ajoute des données de base si nécessaire."""
+    """Crée les tables et ajoute des données de base."""
     db.create_all()
-    # Optionnel: Ajouter des données initiales si les tables sont vides
     if not Server.query.first():
         db.session.add_all([Server(name='Kewan'), Server(name='Camille')])
         db.session.commit()
@@ -91,7 +96,6 @@ def manage_servers():
 def delete_server(server_id):
     server = db.session.get(Server, server_id)
     if not server: return jsonify({"error": "Serveur non trouvé."}), 404
-    # Avant de supprimer le serveur, supprimez les avis associés pour éviter les erreurs
     GeneratedReview.query.filter_by(server_name=server.name).delete()
     db.session.delete(server)
     db.session.commit()
@@ -136,39 +140,63 @@ def delete_option(option_type, option_id):
     db.session.commit()
     return jsonify({"success": True})
 
+# --- NOUVEAU : ROUTES API PUBLIQUES POUR LA PAGE D'AVIS (app.html) ---
+# Ces routes permettent à la page de génération d'avis de charger les options
+# dynamiquement sans nécessiter de mot de passe.
+@app.route('/api/public/data', methods=['GET'])
+def get_public_data():
+    try:
+        servers = Server.query.order_by(Server.name).all()
+        flavors = FlavorOption.query.all()
+        atmospheres = AtmosphereOption.query.all()
 
-# --- ROUTES API PUBLIQUES POUR LES PAGES D'AVIS ---
-# Note: Ces routes sont maintenant gérées par les routes de gestion ci-dessus,
-# mais avec une protection par mot de passe. Le frontend de gestion les utilise déjà.
-# Le frontend public app.html devra être adapté pour charger ces données, ce qui n'est pas le cas actuellement.
+        # Regrouper les saveurs par catégorie pour un affichage facile
+        flavors_by_category = {}
+        for f in flavors:
+            if f.category not in flavors_by_category:
+                flavors_by_category[f.category] = []
+            flavors_by_category[f.category].append({"id": f.id, "text": f.text})
+
+        data = {
+            "servers": [{"id": s.id, "name": s.name} for s in servers],
+            "flavors": flavors_by_category,
+            "atmospheres": [{"id": a.id, "text": a.text} for a in atmospheres]
+        }
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur lors de la récupération des données publiques : {e}")
+        return jsonify({"error": "Impossible de charger les données de configuration."}), 500
 
 
 # --- ROUTE DE GÉNÉRATION D'AVIS ---
 @app.route('/generate-review', methods=['POST'])
 def generate_review():
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Données invalides."}), 400
+        
     lang = data.get('lang', 'fr')
     tags = data.get('tags', [])
 
-    # Extraire les informations pour l'enregistrement et le prompt
     details = {}
     for tag in tags:
-        if tag['category'] not in details:
-            details[tag['category']] = []
-        details[tag['category']].append(tag['value'])
+        if tag.get('category') and tag.get('value'):
+            if tag['category'] not in details:
+                details[tag['category']] = []
+            details[tag['category']].append(tag['value'])
     
     server_name = details.get('server_name', [None])[0]
 
-    # Enregistrer l'avis si un serveur est mentionné
     if server_name:
         new_review_log = GeneratedReview(server_name=server_name)
         db.session.add(new_review_log)
         db.session.commit()
     
-    # Construire le prompt pour OpenAI
     prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
     for category, values in details.items():
-        prompt_text += f"- {category}: {', '.join(values)}\n"
+        # Ne pas inclure le nom du serveur dans le prompt pour éviter la redondance
+        if category != 'server_name':
+            prompt_text += f"- {category}: {', '.join(values)}\n"
     prompt_text += "\nL'avis doit faire environ 4-6 phrases. Varie le style pour ne pas être répétitif."
 
     try:
@@ -191,14 +219,12 @@ def generate_review():
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
-    """Compte le nombre d'avis générés pour chaque serveur."""
     try:
         results = db.session.query(
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
         ).group_by(GeneratedReview.server_name).order_by(func.count(GeneratedReview.id).desc()).all()
         
-        # Formatte les résultats pour le frontend
         data = [{"server": server, "count": count} for server, count in results]
         return jsonify(data)
     except Exception as e:
@@ -207,7 +233,6 @@ def dashboard_data():
 
 # --- POINT D'ENTRÉE POUR RENDER ---
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     # Le port est géré par gunicorn sur Render, debug=False en production
     app.run(debug=False)
+
