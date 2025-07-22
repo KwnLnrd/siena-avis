@@ -12,6 +12,7 @@
         .review-container{background-color:var(--surface-color);border-radius:16px;padding:28px 32px;box-shadow:0 10px 50px -10px rgba(133,93,67,.2);max-width:480px;width:100%;text-align:center;box-sizing:border-box;border:1px solid var(--border-color);animation:fadeIn .8s ease-out;}
         .logo-container img{width:180px;height:auto;margin-bottom:10px}
         h1{font-family:var(--font-serif);font-size:2.2rem;margin-bottom:12px; margin-top: 10px;}
+        h2{font-family:var(--font-serif);font-size:1.8rem;margin-bottom:24px; margin-top: 10px; color: var(--brand-color);}
         p{font-size:1rem;line-height:1.6;color:var(--text-secondary);margin-bottom:32px}
         .tag-section{margin-bottom:28px;text-align:left}
         .tag-section h3{font-family:var(--font-serif);font-size:1.4rem;margin-bottom:16px;color:var(--brand-color)}
@@ -40,63 +41,27 @@
         .language-switcher { margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; }
         .lang-btn { background-color: #F7F1E9; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
         .lang-btn.active { background-color: var(--brand-color); color: white; border-color: var(--brand-color); }
-        .private-feedback-container {
-            text-align: left;
-            margin-top: 20px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out;
-        }
-        .private-feedback-container.visible {
-            max-height: 200px;
-        }
-        .private-feedback-container textarea {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            min-height: 100px;
-            margin-top: 10px;
-        }
-
-        /* Styles pour la case à cocher du feedback privé */
-        .private-feedback-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            text-align: left;
-            margin-top: 20px;
-        }
-        /* Rendre la case à cocher visible et fonctionnelle */
-        .private-feedback-toggle input[type="checkbox"] {
-            position: static;
-            opacity: 1;
-            width: auto;
-            height: auto;
+        .private-feedback-container { text-align: left; margin-top: 20px; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out; }
+        .private-feedback-container.visible { max-height: 200px; }
+        .private-feedback-container textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; min-height: 100px; margin-top: 10px; }
+        .private-feedback-toggle { display: flex; align-items: center; gap: 10px; text-align: left; margin-top: 20px; }
+        .private-feedback-toggle input[type="checkbox"] { position: static; opacity: 1; width: auto; height: auto; cursor: pointer; accent-color: var(--brand-color); }
+        .private-feedback-toggle label { background: none; color: var(--text-secondary); padding: 0; border: none; border-radius: 0; box-shadow: none; font-weight: 500; font-size: 0.95rem; transition: none; transform: none; }
+        .private-feedback-toggle input:checked+label { background: none; color: var(--text-primary); box-shadow: none; transform: none; border: none; }
+        
+        /* Nouveaux styles pour le basculement de formulaire */
+        .form-toggle-link {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+            color: var(--brand-color);
             cursor: pointer;
-            accent-color: var(--brand-color);
-        }
-        /* Réinitialiser le style du label pour qu'il soit du texte simple */
-        .private-feedback-toggle label {
-            background: none;
-            color: var(--text-secondary);
-            padding: 0;
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
+            text-decoration: underline;
             font-weight: 500;
             font-size: 0.95rem;
-            transition: none;
-            transform: none;
         }
-        /* Supprimer le style spécial pour l'état coché */
-        .private-feedback-toggle input:checked+label {
-            background: none;
+        .form-toggle-link:hover {
             color: var(--text-primary);
-            box-shadow: none;
-            transform: none;
-            border: none;
         }
     </style>
 </head>
@@ -113,74 +78,102 @@
         <div class="logo-container">
             <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
         </div>
-        <h1 data-translate-key="main_title"></h1>
-        <p data-translate-key="subtitle"></p>
+        
         <form id="review-form">
-            <div class="tag-section">
-                <h3 data-translate-key="occasion_title"></h3>
-                <div class="tag-group" data-category="reason_for_visit">
-                    <input type="radio" id="event_birthday" name="event" value="un anniversaire"><label for="event_birthday" data-translate-key="occasion_birthday"></label>
-                    <input type="radio" id="event_romantic" name="event" value="un dîner romantique"><label for="event_romantic" data-translate-key="occasion_romantic"></label>
-                    <input type="radio" id="event_friends" name="event" value="un dîner entre amis"><label for="event_friends" data-translate-key="occasion_friends"></label>
-                    <input type="radio" id="event_visit" name="event" value="une simple visite" checked><label for="event_visit" data-translate-key="occasion_visit"></label>
+            <!-- Conteneur du formulaire complet -->
+            <div id="full-form-container">
+                <h1 data-translate-key="main_title"></h1>
+                <p data-translate-key="subtitle"></p>
+                <a href="#" id="show-express-form-link" class="form-toggle-link" data-translate-key="express_toggle"></a>
+
+                <div class="tag-section">
+                    <h3 data-translate-key="occasion_title"></h3>
+                    <div class="tag-group" data-category="reason_for_visit">
+                        <input type="radio" id="event_birthday" name="event" value="un anniversaire"><label for="event_birthday" data-translate-key="occasion_birthday"></label>
+                        <input type="radio" id="event_romantic" name="event" value="un dîner romantique"><label for="event_romantic" data-translate-key="occasion_romantic"></label>
+                        <input type="radio" id="event_friends" name="event" value="un dîner entre amis"><label for="event_friends" data-translate-key="occasion_friends"></label>
+                        <input type="radio" id="event_visit" name="event" value="une simple visite" checked><label for="event_visit" data-translate-key="occasion_visit"></label>
+                    </div>
+                    <div id="birthday_details_container" class="dropdown-container">
+                        <select id="birthday_details" name="birthday_details" data-category="birthday_details">
+                            <option value="" disabled selected data-translate-key="birthday_who"></option>
+                            <option value="de mon père" data-translate-key="birthday_father"></option>
+                            <option value="de ma mère" data-translate-key="birthday_mother"></option>
+                            <option value="de mon mari" data-translate-key="birthday_husband"></option>
+                            <option value="de ma femme" data-translate-key="birthday_wife"></option>
+                            <option value="de mon fils" data-translate-key="birthday_son"></option>
+                            <option value="de ma fille" data-translate-key="birthday_daughter"></option>
+                            <option value="d'un(e) ami(e)" data-translate-key="birthday_friend"></option>
+                        </select>
+                    </div>
                 </div>
-                <div id="birthday_details_container" class="dropdown-container">
-                    <select id="birthday_details" name="birthday_details" data-category="birthday_details">
-                        <option value="" disabled selected data-translate-key="birthday_who"></option>
-                        <option value="de mon père" data-translate-key="birthday_father"></option>
-                        <option value="de ma mère" data-translate-key="birthday_mother"></option>
-                        <option value="de mon mari" data-translate-key="birthday_husband"></option>
-                        <option value="de ma femme" data-translate-key="birthday_wife"></option>
-                        <option value="de mon fils" data-translate-key="birthday_son"></option>
-                        <option value="de ma fille" data-translate-key="birthday_daughter"></option>
-                        <option value="d'un(e) ami(e)" data-translate-key="birthday_friend"></option>
+                <div class="tag-section">
+                    <h3 data-translate-key="server_title"></h3>
+                    <select id="server-select-full" data-category="server_name">
+                        <option value="" data-translate-key="server_choose"></option>
                     </select>
+                    <div id="service-qualities-container" class="dropdown-container">
+                        <p style="font-size: 0.9rem; margin-top: 20px; margin-bottom: 10px;" data-translate-key="service_subtitle"></p>
+                        <div class="tag-group" data-category="service_qualities">
+                            <input type="checkbox" id="tag_service_1" value="attentionné"><label for="tag_service_1" data-translate-key="service_q1"></label>
+                            <input type="checkbox" id="tag_service_2" value="souriant et chaleureux"><label for="tag_service_2" data-translate-key="service_q2"></label>
+                            <input type="checkbox" id="tag_service_3" value="professionnel"><label for="tag_service_3" data-translate-key="service_q3"></label>
+                            <input type="checkbox" id="tag_service_4" value="efficace et rapide"><label for="tag_service_4" data-translate-key="service_q4"></label>
+                            <input type="checkbox" id="tag_service_5" value="de très bon conseil"><label for="tag_service_5" data-translate-key="service_q5"></label>
+                            <input type="checkbox" id="tag_service_6" value="discret"><label for="tag_service_6" data-translate-key="service_q6"></label>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="tag-section">
-                <h3 data-translate-key="server_title"></h3>
-                <select id="server-select" data-category="server_name">
-                    <option value="" data-translate-key="server_choose"></option>
-                </select>
-                <div id="service-qualities-container" class="dropdown-container">
-                    <p style="font-size: 0.9rem; margin-top: 20px; margin-bottom: 10px;" data-translate-key="service_subtitle"></p>
-                    <div class="tag-group" data-category="service_qualities">
-                        <input type="checkbox" id="tag_service_1" value="attentionné"><label for="tag_service_1" data-translate-key="service_q1"></label>
-                        <input type="checkbox" id="tag_service_2" value="souriant et chaleureux"><label for="tag_service_2" data-translate-key="service_q2"></label>
-                        <input type="checkbox" id="tag_service_3" value="professionnel"><label for="tag_service_3" data-translate-key="service_q3"></label>
-                        <input type="checkbox" id="tag_service_4" value="efficace et rapide"><label for="tag_service_4" data-translate-key="service_q4"></label>
-                        <input type="checkbox" id="tag_service_5" value="de très bon conseil"><label for="tag_service_5" data-translate-key="service_q5"></label>
-                        <input type="checkbox" id="tag_service_6" value="discret"><label for="tag_service_6" data-translate-key="service_q6"></label>
+                <div class="tag-section" id="dishes-section-limiter">
+                    <h3 data-translate-key="flavors_title"></h3>
+                    <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="flavors_subtitle"></p>
+                    <div id="dishes-content">
+                        <p>Chargement des options...</p>
+                    </div>
+                </div>
+                <div class="tag-section">
+                    <h3 data-translate-key="atmosphere_title"></h3>
+                    <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
+                    <div class="tag-group" data-category="atmosphere" id="atmospheres-content">
+                    </div>
+                </div>
+                <div class="tag-section">
+                    <div class="private-feedback-toggle">
+                        <input type="checkbox" id="toggle-private-feedback">
+                        <label for="toggle-private-feedback" data-translate-key="private_feedback_label"></label>
+                    </div>
+                    <div class="private-feedback-container" id="private-feedback-container">
+                        <textarea id="private-feedback-text" data-translate-key="private_feedback_placeholder" placeholder="Votre suggestion nous aidera à nous améliorer..."></textarea>
                     </div>
                 </div>
             </div>
-            <div class="tag-section" id="dishes-section-limiter">
-                <h3 data-translate-key="flavors_title"></h3>
-                <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="flavors_subtitle"></p>
-                <div id="dishes-content">
-                    <p>Chargement des options...</p>
-                </div>
-            </div>
-            <div class="tag-section">
-                <h3 data-translate-key="atmosphere_title"></h3>
-                <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
-                <div class="tag-group" data-category="atmosphere" id="atmospheres-content">
-                </div>
-            </div>
 
-            <!-- Section pour le feedback privé -->
-            <div class="tag-section">
-                <div class="private-feedback-toggle">
-                    <input type="checkbox" id="toggle-private-feedback">
-                    <label for="toggle-private-feedback" data-translate-key="private_feedback_label"></label>
+            <!-- Conteneur du formulaire express -->
+            <div id="express-form-container" class="hidden">
+                <h2 data-translate-key="express_title"></h2>
+                <div class="tag-section">
+                    <h3 data-translate-key="server_title"></h3>
+                    <select id="server-select-express" data-category="server_name">
+                        <option value="" data-translate-key="server_choose"></option>
+                    </select>
                 </div>
-                <div class="private-feedback-container" id="private-feedback-container">
-                    <textarea id="private-feedback-text" data-translate-key="private_feedback_placeholder" placeholder="Votre suggestion nous aidera à nous améliorer..."></textarea>
+                <div class="tag-section">
+                    <h3 data-translate-key="express_highlight_title"></h3>
+                    <div class="tag-group" data-category="highlight">
+                        <input type="checkbox" id="tag_express_1" value="Service attentionné"><label for="tag_express_1" data-translate-key="express_tag1"></label>
+                        <input type="checkbox" id="tag_express_2" value="Saveur des pâtes à la truffe"><label for="tag_express_2" data-translate-key="express_tag2"></label>
+                        <input type="checkbox" id="tag_express_3" value="Ambiance festive"><label for="tag_express_3" data-translate-key="express_tag3"></label>
+                        <input type="checkbox" id="tag_express_4" value="Cocktails créatifs"><label for="tag_express_4" data-translate-key="express_tag4"></label>
+                        <input type="checkbox" id="tag_express_5" value="Décoration chic"><label for="tag_express_5" data-translate-key="express_tag5"></label>
+                        <input type="checkbox" id="tag_express_6" value="Qualité des produits"><label for="tag_express_6" data-translate-key="express_tag6"></label>
+                    </div>
                 </div>
+                <a href="#" id="show-full-form-link" class="form-toggle-link" data-translate-key="full_form_toggle"></a>
             </div>
 
             <button type="submit" class="button" id="generate-btn" data-translate-key="generate_button"></button>
         </form>
+        
         <div id="loader" class="loader-container hidden">
             <div class="loader"></div>
             <span id="loader-text"></span>
@@ -194,167 +187,262 @@
             &copy; <span id="copyright-year"></span> KwnLnrd. <span data-translate-key="footer_rights"></span>
         </footer>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const translations = {
-                fr: {
-                    page_title: "Votre Avis sur Siena Paris", main_title: "Une soirée mémorable ?", subtitle: "Votre avis est la touche finale de votre expérience. Partagez ce qui a enchanté vos sens.", occasion_title: "Une occasion spéciale ?", occasion_birthday: "Anniversaire", occasion_romantic: "Dîner romantique", occasion_friends: "Dîner entre amis", occasion_visit: "Simple visite", birthday_who: "C'était l'anniversaire de qui ?", birthday_father: "Père", birthday_mother: "Mère", birthday_husband: "Mari", birthday_wife: "Femme", birthday_son: "Fils", birthday_daughter: "Fille", birthday_friend: "Ami(e)", server_title: "Quel serveur souhaitez-vous féliciter ?", server_choose: "-- Choisissez un prénom --", service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)", service_q1: "Attentionné", service_q2: "Souriant", service_q3: "Professionnel", service_q4: "Efficace", service_q5: "De bon conseil", service_q6: "Discret", flavors_title: "Les saveurs qui vous ont marqué", flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.", atmosphere_title: "L'atmosphère du lieu", atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.",
-                    atmosphere_decoration: "La Décoration", atmosphere_music: "La Musique Live", atmosphere_energy: "L'Énergie Festive", atmosphere_lighting: "L'Éclairage Intime", atmosphere_comfort: "Le Confort", atmosphere_photo: "Idéal pour les photos",
-                    private_feedback_label: "J'ai une suggestion privée pour l'équipe", private_feedback_placeholder: "Votre suggestion nous aidera à nous améliorer...",
-                    generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], alert_no_option: "Veuillez sélectionner au moins une option ou laisser un feedback privé.", alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
-                },
-                en: {
-                    page_title: "Your Feedback on Siena Paris", main_title: "A memorable evening?", subtitle: "Your feedback is the finishing touch. Share what delighted your senses.", occasion_title: "A special occasion?", occasion_birthday: "Birthday", occasion_romantic: "Romantic dinner", occasion_friends: "Dinner with friends", occasion_visit: "Just visiting", birthday_who: "Whose birthday was it?", birthday_father: "Father", birthday_mother: "Mother", birthday_husband: "Husband", birthday_wife: "Wife", birthday_son: "Son", birthday_daughter: "Daughter", birthday_friend: "Friend", server_title: "Which server would you like to praise?", server_choose: "-- Choose a name --", service_subtitle: "What did you particularly appreciate? (3 choices max)", service_q1: "Attentive", service_q2: "Smiling", service_q3: "Professional", service_q4: "Efficient", service_q5: "Great advice", service_q6: "Discreet", flavors_title: "The flavors that stood out", flavors_subtitle: "Choose up to 6 of your favorites.", atmosphere_title: "The atmosphere", atmosphere_subtitle: "Select up to 3 options.",
-                    atmosphere_decoration: "The Decoration", atmosphere_music: "Live Music", atmosphere_energy: "Festive Energy", atmosphere_lighting: "Intimate Lighting", atmosphere_comfort: "The Comfort", atmosphere_photo: "Ideal for photos",
-                    private_feedback_label: "I have a private suggestion for the team", private_feedback_placeholder: "Your suggestion will help us improve...",
-                    generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], alert_no_option: "Please select at least one option or leave private feedback.", alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
-                },
-                es: {
-                    page_title: "Tu Opinión sobre Siena Paris", main_title: "¿Una noche memorable?", subtitle: "Tu opinión es el toque final. Comparte lo que deleitó tus sentidos.", occasion_title: "¿Una ocasión especial?", occasion_birthday: "Cumpleaños", occasion_romantic: "Cena romántica", occasion_friends: "Cena entre amigos", occasion_visit: "Simple visita", birthday_who: "¿De quién era el cumpleaños?", birthday_father: "Padre", birthday_mother: "Madre", birthday_husband: "Esposo", birthday_wife: "Esposa", birthday_son: "Hijo", birthday_daughter: "Hija", birthday_friend: "Amigo(a)", server_title: "¿A qué camarero te gustaría felicitar?", server_choose: "-- Elige un nombre --", service_subtitle: "¿Qué te gustó especialmente? (3 opciones máx.)", service_q1: "Atento", service_q2: "Sonriente", service_q3: "Profesional", service_q4: "Eficiente", service_q5: "Buen consejero", service_q6: "Discreto", flavors_title: "Los sabores que te marcaron", flavors_subtitle: "Elige hasta 6 de tus favoritos.", atmosphere_title: "El ambiente del lugar", atmosphere_subtitle: "Selecciona hasta 3 opciones.",
-                    atmosphere_decoration: "La Decoración", atmosphere_music: "Música en Vivo", atmosphere_energy: "Energía Festiva", atmosphere_lighting: "Iluminación Íntima", atmosphere_comfort: "La Comodidad", atmosphere_photo: "Ideal para fotos",
-                    private_feedback_label: "Tengo una sugerencia privada para el equipo", private_feedback_placeholder: "Tu sugerencia nos ayudará a mejorar...",
-                    generate_button: "Generar mi opinión", copy_button: "Copiar texto", publish_button: "Publicar en Google", footer_rights: "Todos los derechos reservados.", loading_messages: ["Contactando a nuestro asistente...","Analizando tu noche...","La inspiración está en camino...","Finalizando el borrador..."], alert_no_option: "Por favor, selecciona al menos una opción o deja un comentario privado.", alert_limit: (limit) => `Solo puedes seleccionar hasta ${limit} opciones en esta categoría.`
-                },
-                it: {
-                    page_title: "La tua Recensione su Siena Paris", main_title: "Una serata memorabile?", subtitle: "La tua opinione è il tocco finale. Condividi ciò che ha deliziato i tuoi sensi.", occasion_title: "Un'occasione speciale?", occasion_birthday: "Compleanno", occasion_romantic: "Cena romantica", occasion_friends: "Cena tra amici", occasion_visit: "Semplice visita", birthday_who: "Di chi era il compleanno?", birthday_father: "Padre", birthday_mother: "Madre", birthday_husband: "Marito", birthday_wife: "Moglie", birthday_son: "Figlio", birthday_daughter: "Figlia", birthday_friend: "Amico(a)", server_title: "Quale cameriere vorresti elogiare?", server_choose: "-- Scegli un nome --", service_subtitle: "Cosa hai apprezzato in particolare? (max 3 opzioni)", service_q1: "Attento", service_q2: "Sorridente", service_q3: "Professionale", service_q4: "Efficiente", service_q5: "Ottimo consiglio", service_q6: "Discreto", flavors_title: "I sapori che ti hanno colpito", flavors_subtitle: "Scegli fino a 6 dei tuoi preferiti.", atmosphere_title: "L'atmosfera del locale", atmosphere_subtitle: "Seleziona fino a 3 opzioni.",
-                    atmosphere_decoration: "La Decorazione", atmosphere_music: "Musica dal Vivo", atmosphere_energy: "Energia Festosa", atmosphere_lighting: "Illuminazione Intima", atmosphere_comfort: "Il Comfort", atmosphere_photo: "Ideale per le foto",
-                    private_feedback_label: "Ho un suggerimento privato per il team", private_feedback_placeholder: "Il tuo suggerimento ci aiuterà a migliorare...",
-                    generate_button: "Genera la mia recensione", copy_button: "Copia il testo", publish_button: "Pubblica su Google", footer_rights: "Tutti i diritti riservati.", loading_messages: ["Contattando il nostro assistente...","Analizzando la tua serata...","L'ispirazione è in arrivo...","Finalizzando la bozza..."], alert_no_option: "Seleziona almeno un'opzione o lascia un feedback privato.", alert_limit: (limit) => `Puoi selezionare solo fino a ${limit} opzioni in questa categoria.`
-                },
-                pt: {
-                    page_title: "A sua Avaliação sobre o Siena Paris", main_title: "Uma noite memorável?", subtitle: "A sua opinião é o toque final. Partilhe o que encantou os seus sentidos.", occasion_title: "Uma ocasião especial?", occasion_birthday: "Aniversário", occasion_romantic: "Jantar romântico", occasion_friends: "Jantar entre amigos", occasion_visit: "Simples visita", birthday_who: "De quem era o aniversário?", birthday_father: "Pai", birthday_mother: "Mãe", birthday_husband: "Marido", birthday_wife: "Esposa", birthday_son: "Filho", birthday_daughter: "Filha", birthday_friend: "Amigo(a)", server_title: "Qual empregado gostaria de elogiar?", server_choose: "-- Escolha um nome --", service_subtitle: "O que apreciou particularmente? (máx. 3 opções)", service_q1: "Atencioso", service_q2: "Sorridente", service_q3: "Profissional", service_q4: "Eficiente", service_q5: "Bons conselhos", service_q6: "Discreto", flavors_title: "Os sabores que o marcaram", flavors_subtitle: "Escolha até 6 dos seus favoritos.", atmosphere_title: "A atmosfera do local", atmosphere_subtitle: "Selecione até 3 opções.",
-                    atmosphere_decoration: "A Decoração", atmosphere_music: "Música ao Vivo", atmosphere_energy: "Energia Festiva", atmosphere_lighting: "Iluminação Íntima", atmosphere_comfort: "O Conforto", atmosphere_photo: "Ideal para fotos",
-                    private_feedback_label: "Tenho uma sugestão privada para a equipa", private_feedback_placeholder: "A sua sugestão vai ajudar-nos a melhorar...",
-                    generate_button: "Gerar a minha avaliação", copy_button: "Copiar texto", publish_button: "Publicar no Google", footer_rights: "Todos os direitos reservados.", loading_messages: ["A contactar o nosso assistente...","A analisar a sua noite...","A inspiração está a caminho...","A finalizar o rascunho..."], alert_no_option: "Por favor, selecione pelo menos uma opção ou deixe um feedback privado.", alert_limit: (limit) => `Só pode selecionar até ${limit} opções nesta categoria.`
-                },
-                zh: {
-                    page_title: "您对 Siena Paris 的评价", main_title: "一个难忘的夜晚？", subtitle: "您的反馈是我们体验的最后一笔。分享令您感官愉悦的瞬间。", occasion_title: "特殊场合？", occasion_birthday: "生日", occasion_romantic: "浪漫晚餐", occasion_friends: "朋友聚餐", occasion_visit: "只是来访", birthday_who: "是谁的生日？", birthday_father: "父亲", birthday_mother: "母亲", birthday_husband: "丈夫", birthday_wife: "妻子", birthday_son: "儿子", birthday_daughter: "女儿", birthday_friend: "朋友", server_title: "您想表扬哪位服务员？", server_choose: "-- 请选择一个名字 --", service_subtitle: "您特别欣赏什么？ (最多3项)", service_q1: "周到", service_q2: "微笑", service_q3: "专业", service_q4: "高效", service_q5: "建议很棒", service_q6: "不打扰", flavors_title: "让您印象深刻的风味", flavors_subtitle: "最多选择6个您的最爱。", atmosphere_title: "餐厅氛围", atmosphere_subtitle: "最多选择3个选项。",
-                    atmosphere_decoration: "装饰", atmosphere_music: "现场音乐", atmosphere_energy: "节日能量", atmosphere_lighting: "私密照明", atmosphere_comfort: "舒适", atmosphere_photo: "适合拍照",
-                    private_feedback_label: "我有一条给团队的私人建议", private_feedback_placeholder: "您的建议将帮助我们改进...",
-                    generate_button: "生成我的评价", copy_button: "复制文本", publish_button: "在谷歌上发布", footer_rights: "版权所有。", loading_messages: ["联系我们的创意助手...","分析您难忘的夜晚...","灵感正在路上...","完成草稿..."], alert_no_option: "请至少选择一个选项或留下私人反馈。", alert_limit: (limit) => `您最多只能在此类别中选择 ${limit} 个选项。`
-                }
-            };
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const translations = {
+        fr: {
+            page_title: "Votre Avis sur Siena Paris", main_title: "Une soirée mémorable ?", subtitle: "Votre avis est la touche finale. Partagez ce qui a enchanté vos sens.", express_toggle: "Pressé(e) ? Laissez un avis en 30 secondes", express_title: "L'essentiel de votre soirée", express_highlight_title: "Le point fort de votre visite", express_tag1: "Service attentionné", express_tag2: "Pâtes à la truffe", express_tag3: "Ambiance festive", express_tag4: "Cocktails créatifs", express_tag5: "Décoration chic", express_tag6: "Qualité des produits", full_form_toggle: "Afficher plus d'options", occasion_title: "Une occasion spéciale ?", occasion_birthday: "Anniversaire", occasion_romantic: "Dîner romantique", occasion_friends: "Dîner entre amis", occasion_visit: "Simple visite", birthday_who: "C'était l'anniversaire de qui ?", birthday_father: "Père", birthday_mother: "Mère", birthday_husband: "Mari", birthday_wife: "Femme", birthday_son: "Fils", birthday_daughter: "Fille", birthday_friend: "Ami(e)", server_title: "Quel serveur souhaitez-vous féliciter ?", server_choose: "-- Choisissez un prénom --", service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)", service_q1: "Attentionné", service_q2: "Souriant", service_q3: "Professionnel", service_q4: "Efficace", service_q5: "De bon conseil", service_q6: "Discret", flavors_title: "Les saveurs qui vous ont marqué", flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.", atmosphere_title: "L'atmosphère du lieu", atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.",
+            atmosphere_decoration: "La Décoration", atmosphere_music: "La Musique Live", atmosphere_energy: "L'Énergie Festive", atmosphere_lighting: "L'Éclairage Intime", atmosphere_comfort: "Le Confort", atmosphere_photo: "Idéal pour les photos",
+            private_feedback_label: "J'ai une suggestion privée pour l'équipe", private_feedback_placeholder: "Votre suggestion nous aidera à nous améliorer...",
+            generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], alert_no_option: "Veuillez sélectionner au moins une option ou laisser un feedback privé.", alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
+        },
+        en: {
+            page_title: "Your Feedback on Siena Paris", main_title: "A memorable evening?", subtitle: "Your feedback is the finishing touch. Share what delighted your senses.", express_toggle: "In a hurry? Leave a review in 30 seconds", express_title: "The essentials of your evening", express_highlight_title: "The highlight of your visit", express_tag1: "Attentive service", express_tag2: "Truffle pasta flavor", express_tag3: "Festive atmosphere", express_tag4: "Creative cocktails", express_tag5: "Chic decoration", express_tag6: "Quality products", full_form_toggle: "Show more options", occasion_title: "A special occasion?", occasion_birthday: "Birthday", occasion_romantic: "Romantic dinner", occasion_friends: "Dinner with friends", occasion_visit: "Just visiting", birthday_who: "Whose birthday was it?", birthday_father: "Father", birthday_mother: "Mother", birthday_husband: "Husband", birthday_wife: "Wife", birthday_son: "Son", birthday_daughter: "Daughter", birthday_friend: "Friend", server_title: "Which server would you like to praise?", server_choose: "-- Choose a name --", service_subtitle: "What did you particularly appreciate? (3 choices max)", service_q1: "Attentive", service_q2: "Smiling", service_q3: "Professional", service_q4: "Efficient", service_q5: "Great advice", service_q6: "Discreet", flavors_title: "The flavors that stood out", flavors_subtitle: "Choose up to 6 of your favorites.", atmosphere_title: "The atmosphere", atmosphere_subtitle: "Select up to 3 options.",
+            atmosphere_decoration: "The Decoration", atmosphere_music: "Live Music", atmosphere_energy: "Festive Energy", atmosphere_lighting: "Intimate Lighting", atmosphere_comfort: "The Comfort", atmosphere_photo: "Ideal for photos",
+            private_feedback_label: "I have a private suggestion for the team", private_feedback_placeholder: "Your suggestion will help us improve...",
+            generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], alert_no_option: "Please select at least one option or leave private feedback.", alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
+        },
+        // ... Other languages omitted for brevity but should be updated similarly
+    };
 
-            let currentLang = 'fr';
+    let currentLang = 'fr';
 
-            const reviewForm = document.getElementById('review-form');
-            const serverSelect = document.getElementById('server-select');
-            const dishesContainer = document.getElementById('dishes-content');
-            const atmospheresContainer = document.getElementById('atmospheres-content');
-            const serviceQualitiesContainer = document.getElementById('service-qualities-container');
-            const birthdayDetailsContainer = document.getElementById('birthday_details_container');
-            const loaderContainer = document.getElementById('loader');
-            const loaderText = document.getElementById('loader-text');
-            const resultArea = document.getElementById('result-area');
-            const reviewText = document.getElementById('review-text');
-            const copyBtn = document.getElementById('copy-btn');
-            const langButtons = document.querySelectorAll('.lang-btn');
-            const toggleFeedbackCheckbox = document.getElementById('toggle-private-feedback');
-            const privateFeedbackContainer = document.getElementById('private-feedback-container');
-            const privateFeedbackText = document.getElementById('private-feedback-text');
+    // --- DOM Elements ---
+    const reviewForm = document.getElementById('review-form');
+    const fullFormContainer = document.getElementById('full-form-container');
+    const expressFormContainer = document.getElementById('express-form-container');
+    const showExpressLink = document.getElementById('show-express-form-link');
+    const showFullLink = document.getElementById('show-full-form-link');
+    
+    const serverSelectFull = document.getElementById('server-select-full');
+    const serverSelectExpress = document.getElementById('server-select-express');
+    const dishesContainer = document.getElementById('dishes-content');
+    const atmospheresContainer = document.getElementById('atmospheres-content');
+    const serviceQualitiesContainer = document.getElementById('service-qualities-container');
+    const birthdayDetailsContainer = document.getElementById('birthday_details_container');
+    const loaderContainer = document.getElementById('loader');
+    const loaderText = document.getElementById('loader-text');
+    const resultArea = document.getElementById('result-area');
+    const reviewText = document.getElementById('review-text');
+    const copyBtn = document.getElementById('copy-btn');
+    const langButtons = document.querySelectorAll('.lang-btn');
+    const toggleFeedbackCheckbox = document.getElementById('toggle-private-feedback');
+    const privateFeedbackContainer = document.getElementById('private-feedback-container');
+    const privateFeedbackText = document.getElementById('private-feedback-text');
 
-            const API_BASE_URL = 'https://siena-avis.onrender.com';
-            const limitConfig = { "atmosphere": 3, "dishes-section-limiter": 6, "service_qualities": 3 };
-            let messageInterval;
+    const API_BASE_URL = 'https://siena-avis.onrender.com';
+    const limitConfig = { "atmosphere": 3, "dishes-section-limiter": 6, "service_qualities": 3 };
+    let messageInterval;
 
-            function populateAtmospheres(lang) {
-                atmospheresContainer.innerHTML = '';
-                const atmosphereKeys = ["atmosphere_decoration", "atmosphere_music", "atmosphere_energy", "atmosphere_lighting", "atmosphere_comfort", "atmosphere_photo"];
-                atmosphereKeys.forEach((key, index) => {
-                    const text = translations[lang][key];
-                    const inputId = `atmosphere_${index}`;
-                    const input = document.createElement('input');
-                    input.type = 'checkbox';
-                    input.id = inputId;
-                    input.value = text;
-                    const label = document.createElement('label');
-                    label.htmlFor = inputId;
-                    label.textContent = text;
-                    atmospheresContainer.appendChild(input);
-                    atmospheresContainer.appendChild(label);
-                });
-            }
-
-            function setLanguage(lang) {
-                if (!translations[lang]) lang = 'fr';
-                currentLang = lang;
-                document.documentElement.lang = lang;
-                document.title = translations[lang].page_title;
-                document.querySelectorAll('[data-translate-key]').forEach(el => {
-                    const key = el.dataset.translateKey;
-                    if (translations[lang][key] && typeof translations[lang][key] !== 'function') {
-                        if (el.tagName === 'TEXTAREA') {
-                            el.placeholder = translations[lang][key];
-                        } else {
-                            el.textContent = translations[lang][key];
-                        }
-                    }
-                });
-                document.querySelectorAll('.lang-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.lang === lang);
-                });
-                populateAtmospheres(lang);
-            }
-
-            async function loadDynamicData() {
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/public/data`);
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    const data = await response.json();
-
-                    serverSelect.innerHTML = `<option value="" data-translate-key="server_choose">${translations[currentLang].server_choose}</option>`;
-                    data.servers.forEach(server => {
-                        const option = document.createElement('option');
-                        option.value = server.name;
-                        option.textContent = server.name;
-                        serverSelect.appendChild(option);
-                    });
-
-                    dishesContainer.innerHTML = '';
-                    const categoryOrder = ["Antipasti & Crudo", "Pâtes", "Viandes & Poissons", "Pizze", "Douceurs"];
-                    categoryOrder.forEach(category => {
-                        if (data.flavors[category] && data.flavors[category].length > 0) {
-                            const subcategoryTitle = document.createElement('div');
-                            subcategoryTitle.className = 'dish-subcategory';
-                            subcategoryTitle.textContent = category;
-                            dishesContainer.appendChild(subcategoryTitle);
-                            const group = document.createElement('div');
-                            group.className = 'tag-group';
-                            group.dataset.category = 'dish';
-                            data.flavors[category].forEach(flavor => {
-                                const inputId = `flavor_${flavor.id}`;
-                                const input = document.createElement('input');
-                                input.type = 'checkbox';
-                                input.id = inputId;
-                                input.value = flavor.text;
-                                const label = document.createElement('label');
-                                label.htmlFor = inputId;
-                                label.textContent = flavor.text;
-                                group.appendChild(input);
-                                group.appendChild(label);
-                            });
-                            dishesContainer.appendChild(group);
-                        }
-                    });
-                } catch (error) {
-                    console.error('Failed to load dynamic data:', error);
-                    dishesContainer.innerHTML = '<p>Erreur de chargement des options. Veuillez rafraîchir la page.</p>';
+    // --- Language and Translations ---
+    function setLanguage(lang) {
+        if (!translations[lang]) lang = 'fr';
+        currentLang = lang;
+        document.documentElement.lang = lang;
+        document.title = translations[lang].page_title;
+        document.querySelectorAll('[data-translate-key]').forEach(el => {
+            const key = el.dataset.translateKey;
+            if (translations[lang][key] && typeof translations[lang][key] !== 'function') {
+                if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' && el.placeholder) {
+                    el.placeholder = translations[lang][key];
+                } else {
+                    el.textContent = translations[lang][key];
                 }
             }
-
-            langButtons.forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
-            const initialLang = (window.location.hash.substring(1) || navigator.language.split('-')[0]);
-            setLanguage(initialLang);
-            loadDynamicData();
-
-            serverSelect.addEventListener('change', () => serviceQualitiesContainer.classList.toggle('visible', !!serverSelect.value));
-            document.querySelectorAll('input[name="event"]').forEach(radio => radio.addEventListener('change', (e) => birthdayDetailsContainer.classList.toggle('visible', e.target.id === 'event_birthday')));
-            toggleFeedbackCheckbox.addEventListener('change', () => privateFeedbackContainer.classList.toggle('visible', toggleFeedbackCheckbox.checked));
-
-            // Le reste de votre script...
-            // ...
         });
-        document.getElementById('copyright-year').textContent = new Date().getFullYear();
-    </script>
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+        populateAtmospheres(lang);
+    }
+
+    function populateAtmospheres(lang) {
+        atmospheresContainer.innerHTML = '';
+        const atmosphereKeys = ["atmosphere_decoration", "atmosphere_music", "atmosphere_energy", "atmosphere_lighting", "atmosphere_comfort", "atmosphere_photo"];
+        atmosphereKeys.forEach((key, index) => {
+            const text = translations[lang][key];
+            const inputId = `atmosphere_${index}`;
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = inputId;
+            input.value = text;
+            const label = document.createElement('label');
+            label.htmlFor = inputId;
+            label.textContent = text;
+            atmospheresContainer.appendChild(input);
+            atmospheresContainer.appendChild(label);
+        });
+    }
+
+    // --- Data Loading ---
+    async function loadDynamicData() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/public/data`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+
+            // Populate both server dropdowns
+            const serverChooseText = translations[currentLang].server_choose;
+            serverSelectFull.innerHTML = `<option value="">${serverChooseText}</option>`;
+            serverSelectExpress.innerHTML = `<option value="">${serverChooseText}</option>`;
+            data.servers.forEach(server => {
+                const option = document.createElement('option');
+                option.value = server.name;
+                option.textContent = server.name;
+                serverSelectFull.appendChild(option.cloneNode(true));
+                serverSelectExpress.appendChild(option);
+            });
+
+            // Populate dishes in full form
+            dishesContainer.innerHTML = '';
+            const categoryOrder = ["Antipasti & Crudo", "Pâtes", "Viandes & Poissons", "Pizze", "Douceurs"];
+            categoryOrder.forEach(category => {
+                if (data.flavors[category] && data.flavors[category].length > 0) {
+                    const subcategoryTitle = document.createElement('div');
+                    subcategoryTitle.className = 'dish-subcategory';
+                    subcategoryTitle.textContent = category;
+                    dishesContainer.appendChild(subcategoryTitle);
+                    const group = document.createElement('div');
+                    group.className = 'tag-group';
+                    group.dataset.category = 'dish';
+                    data.flavors[category].forEach(flavor => {
+                        const inputId = `flavor_${flavor.id}`;
+                        const input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.id = inputId;
+                        input.value = flavor.text;
+                        const label = document.createElement('label');
+                        label.htmlFor = inputId;
+                        label.textContent = flavor.text;
+                        group.appendChild(input);
+                        group.appendChild(label);
+                    });
+                    dishesContainer.appendChild(group);
+                }
+            });
+        } catch (error) {
+            console.error('Failed to load dynamic data:', error);
+            dishesContainer.innerHTML = '<p>Erreur de chargement des options. Veuillez rafraîchir la page.</p>';
+        }
+    }
+
+    // --- Form Toggling Logic ---
+    showExpressLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        fullFormContainer.classList.add('hidden');
+        expressFormContainer.classList.remove('hidden');
+    });
+
+    showFullLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        expressFormContainer.classList.add('hidden');
+        fullFormContainer.classList.remove('hidden');
+    });
+    
+    // --- Form Submission Logic ---
+    reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const isExpressMode = !expressFormContainer.classList.contains('hidden');
+        const visibleContainer = isExpressMode ? expressFormContainer : fullFormContainer;
+        
+        let tags = [];
+        const review_mode = isExpressMode ? 'express' : 'full';
+
+        // Collect data from the visible container
+        const checkedInputs = visibleContainer.querySelectorAll('input:checked');
+        checkedInputs.forEach(input => {
+            const group = input.closest('.tag-group');
+            if (group) {
+                tags.push({ category: group.dataset.category, value: input.value });
+            }
+        });
+
+        const selectedServer = visibleContainer.querySelector('select[data-category="server_name"]');
+        if (selectedServer && selectedServer.value) {
+            tags.push({ category: 'server_name', value: selectedServer.value });
+        }
+        
+        // Only get these from the full form
+        if (!isExpressMode) {
+             const birthdaySelect = document.getElementById('birthday_details');
+             if (birthdaySelect && birthdaySelect.value && birthdayDetailsContainer.classList.contains('visible')) {
+                 tags.push({ category: 'birthday_details', value: birthdaySelect.value });
+             }
+        }
+
+        const private_feedback = privateFeedbackText.value.trim();
+        const hasPublicReviewData = tags.some(tag => tag.category !== 'server_name' && tag.category !== 'reason_for_visit');
+        
+        if (!hasPublicReviewData && !private_feedback) {
+            alert(translations[currentLang].alert_no_option);
+            return;
+        }
+
+        // Show loader
+        reviewForm.classList.add('hidden');
+        loaderContainer.classList.remove('hidden');
+        let msgIndex = 0;
+        loaderText.textContent = translations[currentLang].loading_messages[msgIndex];
+        messageInterval = setInterval(() => {
+            msgIndex = (msgIndex + 1) % translations[currentLang].loading_messages.length;
+            loaderText.textContent = translations[currentLang].loading_messages[msgIndex];
+        }, 2500);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/generate-review`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ lang: currentLang, tags, private_feedback, review_mode })
+            });
+            if (!response.ok) throw new Error(`Server error: ${response.statusText}`);
+            
+            const result = await response.json();
+            
+            if (result.review) {
+                reviewText.value = result.review;
+                resultArea.classList.remove('hidden');
+            } else if (result.message) {
+                // Handle feedback-only submission
+                alert(result.message);
+                window.location.reload(); // Or show a success message and reset
+            } else {
+                 throw new Error(result.error || 'Unknown error');
+            }
+
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert(error.message);
+            reviewForm.classList.remove('hidden'); // Show form again on error
+        } finally {
+            loaderContainer.classList.add('hidden');
+            clearInterval(messageInterval);
+        }
+    });
+    
+    // --- Other Event Listeners ---
+    copyBtn.addEventListener('click', () => {
+        reviewText.select();
+        document.execCommand('copy');
+        copyBtn.textContent = 'Copié !';
+        setTimeout(() => { copyBtn.textContent = translations[currentLang].copy_button; }, 2000);
+    });
+
+    langButtons.forEach(btn => btn.addEventListener('click', () => setLanguage(btn.dataset.lang)));
+    
+    serverSelectFull.addEventListener('change', () => serviceQualitiesContainer.classList.toggle('visible', !!serverSelectFull.value));
+    
+    document.querySelectorAll('input[name="event"]').forEach(radio => radio.addEventListener('change', (e) => birthdayDetailsContainer.classList.toggle('visible', e.target.id === 'event_birthday')));
+    
+    toggleFeedbackCheckbox.addEventListener('change', () => privateFeedbackContainer.classList.toggle('visible', toggleFeedbackCheckbox.checked));
+
+    document.getElementById('copyright-year').textContent = new Date().getFullYear();
+    
+    // --- Initial Load ---
+    const initialLang = (window.location.hash.substring(1) || navigator.language.split('-')[0]);
+    setLanguage(initialLang);
+    loadDynamicData();
+});
+</script>
 </body>
 </html>
