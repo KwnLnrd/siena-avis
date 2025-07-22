@@ -207,9 +207,16 @@ def generate_review():
             return jsonify({"message": "Feedback enregistré avec succès."})
 
         prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
+        
         for category, values in details.items():
+            # Exclure le nom du serveur de cette liste générique pour le traiter séparément
             if category != 'server_name':
                 prompt_text += f"- {category}: {', '.join(values)}\n"
+        
+        # Ajouter une instruction spécifique pour le serveur si son nom a été sélectionné
+        if server_name:
+            prompt_text += f"\nL'avis doit mentionner le service impeccable de {server_name}.\n"
+
         prompt_text += "\nL'avis doit faire environ 4-6 phrases. Varie le style pour ne pas être répétitif."
 
         completion = client.chat.completions.create(
