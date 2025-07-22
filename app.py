@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -11,8 +11,7 @@ from functools import wraps
 
 # --- CONFIGURATION INITIALE ---
 load_dotenv()
-# On spécifie le dossier racine pour les fichiers statiques (HTML, assets)
-app = Flask(__name__, static_folder='.')
+app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 # --- CLIENT OPENAI ---
@@ -74,18 +73,7 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- ROUTES POUR SERVIR LES PAGES HTML ET ASSETS ---
-@app.route('/')
-def serve_app():
-    # Sert app.html comme page principale
-    return send_from_directory('.', 'app.html')
-
-@app.route('/<path:filename>')
-def serve_static_files(filename):
-    # Sert les autres fichiers comme admin.html ou les assets
-    return send_from_directory('.', filename)
-
-# --- ROUTES DE GESTION (API) ---
+# --- ROUTES DE GESTION ---
 @app.route('/api/servers', methods=['GET', 'POST'])
 @password_protected
 def manage_servers():
@@ -340,16 +328,37 @@ def menu_performance_data():
             query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
         elif period == '30days':
             query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
-        
         results = query.group_by(
             MenuSelection.dish_name,
             MenuSelection.dish_category
         ).order_by(
             func.count(MenuSelection.id).desc()
         ).all()
-
-        data = [{"dish_name": name, "dish_category": category, "selection_count": count} for name, category, count in results]
+        data = [{
+            "dish_name": name,
+            "dish_category": category,
+            "selection_count": count
+        } for name, category, count in results]
         return jsonify(data)
     except Exception as e:
-        print(f"Erreur dans /api/menu-performance: {e}")
+        print(f"Erreur performance menu: {e}")
         return jsonify({"error": "Impossible de charger les données de performance."}), 500
+
+# --- NOUVELLE ROUTE POUR RÉINITIALISER LES DONNÉES ---
+@app.route('/api/reset-data', methods=['POST'])
+@password_protected
+def reset_data():
+    try:
+        # Utilise TRUNCATE pour vider les tables et réinitialiser les compteurs
+        db.session.execute(text('TRUNCATE TABLE generated_review RESTART IDENTITY CASCADE;'))
+        db.session.execute(text('TRUNCATE TABLE menu_selections RESTART IDENTITY CASCADE;'))
+        db.session.commit()
+        return jsonify({"success": True, "message": "Les données d'avis et de performance ont été réinitialisées."})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erreur lors de la réinitialisation des données : {e}")
+        return jsonify({"error": "Une erreur est survenue lors de la réinitialisation."}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
