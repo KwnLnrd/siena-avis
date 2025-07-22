@@ -12,21 +12,26 @@ from functools import wraps
 # --- CONFIGURATION INITIALE ---
 load_dotenv()
 app = Flask(__name__)
-
-# CORRECTION : Mise à jour de la configuration CORS pour gérer correctement les requêtes
-# de pré-vérification (preflight) et autoriser les en-têtes d'authentification.
 CORS(app, supports_credentials=True)
 
 # --- CLIENT OPENAI ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# --- CONFIGURATION DE LA BASE DE DONNÉES ---
+# --- CONFIGURATION DE LA BASE DE DONNÉES (LOGIQUE CORRIGÉE) ---
 database_url = os.getenv('DATABASE_URL')
-if database_url and database_url.startswith("postgres://"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
-else:
-    basedir = os.path.abspath(os.path.dirname(__file__))
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'siena_data.db')
+
+# Si DATABASE_URL n'est pas défini sur Render, l'application ne pourra pas démarrer.
+# C'est le comportement souhaité pour éviter d'utiliser une base de données temporaire.
+if not database_url:
+    raise RuntimeError("DATABASE_URL is not set. Please set it in your Render environment variables.")
+
+# Remplacer postgres:// par postgresql:// si nécessaire pour la compatibilité
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+# Affiche l'URL de la base de données dans les logs de Render pour confirmation
+print(f"INFO: Connecting to database at {database_url}")
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'siena_secret_password')
