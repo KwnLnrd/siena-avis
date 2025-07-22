@@ -32,6 +32,10 @@
         #password-form button{background-color:var(--brand-color);color:#fff;border:none;padding:14px;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;width:100%;transition:background-color .2s}
         #password-form button:disabled{background-color:var(--text-secondary);cursor:wait}
         .error-message{color:var(--danger-color);font-size:.9rem;margin-top:10px;min-height:1.2em}
+        .modal-buttons { display: flex; gap: 15px; justify-content: center; }
+        .modal-buttons button { padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); }
+        .modal-buttons .confirm-btn { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
+        .modal-buttons .cancel-btn { background-color: var(--surface-color); color: var(--text-primary); }
 
         /* --- Header et Navigation --- */
         .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
@@ -54,12 +58,7 @@
         th { font-weight: 600; cursor: pointer; }
         th:hover { color: var(--brand-color); }
 
-        /* --- NOUVEAU: Conteneur pour les graphiques --- */
-        .chart-container {
-            position: relative;
-            height: 350px;
-            width: 100%;
-        }
+        .chart-container { position: relative; height: 350px; width: 100%; }
 
         /* --- Feedback --- */
         .feedback-list { display: grid; gap: 20px; }
@@ -83,30 +82,24 @@
         .add-form input, .add-form select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         .add-form button { background-color: var(--brand-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
         .add-form button.edit-mode { background-color: var(--edit-color); }
+        .danger-zone { border: 2px solid var(--danger-color); margin-top: 30px; }
+        .danger-zone .card-title { color: var(--danger-color); }
+        .danger-zone button { background-color: var(--danger-color); }
 
         /* --- AMÉLIORATIONS RESPONSIVES --- */
         @media (max-width: 768px) {
             body { padding: 10px; }
-            .header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 20px;
-            }
+            .header { flex-direction: column; align-items: flex-start; gap: 20px; }
             .header h1 { font-size: 2rem; }
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
             .card { padding: 20px; }
             .nav-tab { padding: 10px 15px; font-size: 0.9rem; }
         }
-
         @media (max-width: 480px) {
             .modal-content { padding: 25px; }
             .nav-tabs { justify-content: center; }
             .nav-tab { flex-grow: 1; }
         }
-
     </style>
 </head>
 <body>
@@ -120,6 +113,18 @@
                 <button type="submit" id="submit-password-btn">Valider</button>
             </form>
             <p id="password-error" class="error-message"></p>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMATION POUR LA RÉINITIALISATION -->
+    <div id="confirm-reset-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 style="color: var(--danger-color);">Êtes-vous sûr ?</h2>
+            <p>Cette action est irréversible. Toutes les données de classement des serveurs et de performance du menu seront définitivement supprimées.</p>
+            <div class="modal-buttons">
+                <button id="cancel-reset-btn" class="cancel-btn">Annuler</button>
+                <button id="confirm-reset-btn" class="confirm-btn">Oui, réinitialiser</button>
+            </div>
         </div>
     </div>
 
@@ -232,6 +237,12 @@
                         </form>
                     </div>
                 </div>
+                <!-- ZONE DE DANGER -->
+                <div class="card danger-zone">
+                    <h2 class="card-title">Zone de Danger</h2>
+                    <p>Cette action réinitialisera toutes les statistiques d'avis et de performance du menu. Les serveurs, plats et feedbacks internes ne seront pas affectés.</p>
+                    <button id="reset-data-btn">Réinitialiser les Données Reçues</button>
+                </div>
             </div>
         </main>
     </div>
@@ -251,6 +262,10 @@
         const mainContent = document.getElementById('main-content');
         const tabs = document.querySelectorAll('.nav-tab[data-tab]');
         const tabContents = document.querySelectorAll('.tab-content');
+        const resetDataBtn = document.getElementById('reset-data-btn');
+        const confirmResetModal = document.getElementById('confirm-reset-modal');
+        const cancelResetBtn = document.getElementById('cancel-reset-btn');
+        const confirmResetBtn = document.getElementById('confirm-reset-btn');
 
         const storedPassword = sessionStorage.getItem('dashboardPassword');
         if (storedPassword) {
@@ -533,6 +548,29 @@
                     manage.flavors.btn.classList.add('edit-mode');
                     manage.flavors.textInput.focus();
                 }
+            }
+        });
+
+        // Logique pour la réinitialisation des données
+        resetDataBtn.addEventListener('click', () => {
+            confirmResetModal.classList.remove('hidden');
+        });
+
+        cancelResetBtn.addEventListener('click', () => {
+            confirmResetModal.classList.add('hidden');
+        });
+
+        confirmResetBtn.addEventListener('click', async () => {
+            try {
+                await fetchWithAuth(`${API_BASE_URL}/api/reset-data`, { method: 'POST' });
+                alert('Données réinitialisées avec succès.');
+                dataCache = {}; // Vider le cache
+                loadDataForTab('overview');
+                loadDataForTab('performance');
+            } catch (error) {
+                alert(`Erreur: ${error.message}`);
+            } finally {
+                confirmResetModal.classList.add('hidden');
             }
         });
     });

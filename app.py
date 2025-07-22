@@ -331,4 +331,34 @@ def menu_performance_data():
         results = query.group_by(
             MenuSelection.dish_name,
             MenuSelection.dish_category
-        ).orde
+        ).order_by(
+            func.count(MenuSelection.id).desc()
+        ).all()
+        data = [{
+            "dish_name": name,
+            "dish_category": category,
+            "selection_count": count
+        } for name, category, count in results]
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur performance menu: {e}")
+        return jsonify({"error": "Impossible de charger les données de performance."}), 500
+
+# --- NOUVELLE ROUTE POUR RÉINITIALISER LES DONNÉES ---
+@app.route('/api/reset-data', methods=['POST'])
+@password_protected
+def reset_data():
+    try:
+        # Utilise TRUNCATE pour vider les tables et réinitialiser les compteurs
+        db.session.execute(text('TRUNCATE TABLE generated_review RESTART IDENTITY CASCADE;'))
+        db.session.execute(text('TRUNCATE TABLE menu_selections RESTART IDENTITY CASCADE;'))
+        db.session.commit()
+        return jsonify({"success": True, "message": "Les données d'avis et de performance ont été réinitialisées."})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erreur lors de la réinitialisation des données : {e}")
+        return jsonify({"error": "Une erreur est survenue lors de la réinitialisation."}), 500
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
