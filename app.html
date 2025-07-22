@@ -53,7 +53,7 @@
             <button class="lang-btn" data-lang="zh">🇨🇳 ZH</button>
         </div>
         <div class="logo-container">
-            <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
+            <img src="logosiena-1.png" alt="Logo Siena Paris">
         </div>
         <h1 data-translate-key="main_title"></h1>
         <p data-translate-key="subtitle"></p>
@@ -166,7 +166,7 @@
 
             function populateAtmospheres(lang) {
                 const container = document.getElementById('atmospheres-content');
-                container.innerHTML = ''; // Vider les options existantes
+                container.innerHTML = '';
                 const atmosphereKeys = [ "atmosphere_decoration", "atmosphere_music", "atmosphere_energy", "atmosphere_lighting", "atmosphere_comfort", "atmosphere_photo" ];
                 
                 atmosphereKeys.forEach((key, index) => {
@@ -176,7 +176,7 @@
                     const input = document.createElement('input');
                     input.type = 'checkbox';
                     input.id = inputId;
-                    input.value = text; // La valeur envoyée à l'API sera le texte traduit
+                    input.value = text;
 
                     const label = document.createElement('label');
                     label.htmlFor = inputId;
@@ -201,7 +201,6 @@
                 document.querySelectorAll('.lang-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.lang === lang);
                 });
-                // Mettre à jour les options d'ambiance avec la bonne langue
                 populateAtmospheres(lang);
             }
 
@@ -239,30 +238,37 @@
                         serverSelect.appendChild(option);
                     });
 
-                    // Remplir la liste des saveurs
+                    // CORRECTION : Définir un ordre fixe pour les catégories et les afficher
                     dishesContainer.innerHTML = '';
-                    for (const category in data.flavors) {
-                        const subcategoryTitle = document.createElement('div');
-                        subcategoryTitle.className = 'dish-subcategory';
-                        subcategoryTitle.textContent = category;
-                        dishesContainer.appendChild(subcategoryTitle);
-                        const group = document.createElement('div');
-                        group.className = 'tag-group';
-                        group.dataset.category = 'dish';
-                        data.flavors[category].forEach(flavor => {
-                            const inputId = `flavor_${flavor.id}`;
-                            const input = document.createElement('input');
-                            input.type = 'checkbox';
-                            input.id = inputId;
-                            input.value = flavor.text;
-                            const label = document.createElement('label');
-                            label.htmlFor = inputId;
-                            label.textContent = flavor.text;
-                            group.appendChild(input);
-                            group.appendChild(label);
-                        });
-                        dishesContainer.appendChild(group);
-                    }
+                    const categoryOrder = ["Antipasti & Crudo", "Pâtes", "Viandes & Poissons", "Pizze", "Douceurs"];
+
+                    categoryOrder.forEach(category => {
+                        // Vérifier si la catégorie existe dans les données reçues et a des plats
+                        if (data.flavors[category] && data.flavors[category].length > 0) {
+                            const subcategoryTitle = document.createElement('div');
+                            subcategoryTitle.className = 'dish-subcategory';
+                            subcategoryTitle.textContent = category;
+                            dishesContainer.appendChild(subcategoryTitle);
+                            
+                            const group = document.createElement('div');
+                            group.className = 'tag-group';
+                            group.dataset.category = 'dish';
+                            
+                            data.flavors[category].forEach(flavor => {
+                                const inputId = `flavor_${flavor.id}`;
+                                const input = document.createElement('input');
+                                input.type = 'checkbox';
+                                input.id = inputId;
+                                input.value = flavor.text;
+                                const label = document.createElement('label');
+                                label.htmlFor = inputId;
+                                label.textContent = flavor.text;
+                                group.appendChild(input);
+                                group.appendChild(label);
+                            });
+                            dishesContainer.appendChild(group);
+                        }
+                    });
 
                 } catch (error) {
                     console.error('Failed to load dynamic data:', error);
