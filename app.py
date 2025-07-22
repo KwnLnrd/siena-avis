@@ -334,4 +334,22 @@ def menu_performance_data():
         query = db.session.query(
             MenuSelection.dish_name,
             MenuSelection.dish_category,
-            func.
+            func.count(MenuSelection.id).label('selection_count')
+        )
+        if period == '7days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
+        elif period == '30days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
+        
+        results = query.group_by(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category
+        ).order_by(
+            func.count(MenuSelection.id).desc()
+        ).all()
+
+        data = [{"dish_name": name, "dish_category": category, "selection_count": count} for name, category, count in results]
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur dans /api/menu-performance: {e}")
+        return jsonify({"error": "Impossible de charger les données de performance."}), 500
