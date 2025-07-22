@@ -4,8 +4,8 @@ from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import func
-from datetime import datetime
+from sqlalchemy import func, text
+from datetime import datetime, timedelta
 from functools import wraps
 
 # --- CONFIGURATION INITIALE ---
@@ -43,7 +43,13 @@ class FlavorOption(db.Model):
     text = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
 
-# Le modèle AtmosphereOption a été supprimé
+class MenuSelection(db.Model):
+    __tablename__ = 'menu_selections'
+    id = db.Column(db.Integer, primary_key=True)
+    dish_name = db.Column(db.Text, nullable=False)
+    dish_category = db.Column(db.Text, nullable=False)
+    selection_timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
 
 # --- INITIALISATION DE LA BASE DE DONNÉES ---
 with app.app_context():
@@ -59,16 +65,7 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- COMMANDE D'INITIALISATION DB ---
-@app.cli.command("init-db")
-def init_db_command():
-    db.create_all()
-    if not Server.query.first():
-        db.session.add_all([Server(name='Kewan'), Server(name='Camille')])
-        db.session.commit()
-    print("Base de données initialisée.")
-
-# --- ROUTES API POUR LA GESTION (PROTÉGÉES) ---
+# --- ROUTES DE GESTION ---
 @app.route('/api/servers', methods=['GET', 'POST'])
 @password_protected
 def manage_servers():
@@ -95,17 +92,15 @@ def delete_server(server_id):
 @app.route('/api/options/flavors', methods=['GET', 'POST'])
 @password_protected
 def manage_flavors():
-    Model = FlavorOption
     if request.method == 'POST':
         data = request.get_json()
         if not data or not data.get('text') or not data.get('category'):
             return jsonify({"error": "Données manquantes."}), 400
-        new_option = Model(text=data['text'].strip(), category=data['category'].strip())
+        new_option = FlavorOption(text=data['text'].strip(), category=data['category'].strip())
         db.session.add(new_option)
         db.session.commit()
         return jsonify({"id": new_option.id, "text": new_option.text, "category": new_option.category}), 201
-    
-    options = Model.query.all()
+    options = FlavorOption.query.all()
     return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
 
 @app.route('/api/options/flavors/<int:option_id>', methods=['DELETE'])
@@ -117,23 +112,21 @@ def delete_flavor(option_id):
     db.session.commit()
     return jsonify({"success": True})
 
+
 # --- ROUTES API PUBLIQUES ---
 @app.route('/api/public/data', methods=['GET'])
 def get_public_data():
     try:
         servers = Server.query.order_by(Server.name).all()
         flavors = FlavorOption.query.all()
-
         flavors_by_category = {}
         for f in flavors:
             if f.category not in flavors_by_category:
                 flavors_by_category[f.category] = []
             flavors_by_category[f.category].append({"id": f.id, "text": f.text})
-
         data = {
             "servers": [{"id": s.id, "name": s.name} for s in servers],
             "flavors": flavors_by_category,
-            # La clé "atmospheres" n'est plus envoyée
         }
         return jsonify(data)
     except Exception as e:
@@ -150,26 +143,38 @@ def generate_review():
     tags = data.get('tags', [])
 
     details = {}
+    dish_selections = []
+    
     for tag in tags:
         if tag.get('category') and tag.get('value'):
             if tag['category'] not in details:
                 details[tag['category']] = []
             details[tag['category']].append(tag['value'])
-    
+            
+            if tag['category'] == 'dish':
+                flavor_option = FlavorOption.query.filter_by(text=tag['value']).first()
+                if flavor_option:
+                    dish_selections.append({ "name": tag['value'], "category": flavor_option.category })
+
     server_name = details.get('server_name', [None])[0]
 
     if server_name:
         new_review_log = GeneratedReview(server_name=server_name)
         db.session.add(new_review_log)
-        db.session.commit()
-    
-    prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
-    for category, values in details.items():
-        if category != 'server_name':
-            prompt_text += f"- {category}: {', '.join(values)}\n"
-    prompt_text += "\nL'avis doit faire environ 4-6 phrases. Varie le style pour ne pas être répétitif."
+
+    for dish in dish_selections:
+        new_selection = MenuSelection(dish_name=dish['name'], dish_category=dish['category'])
+        db.session.add(new_selection)
 
     try:
+        db.session.commit()
+        
+        prompt_text = f"Rédige un avis client positif et chaleureux pour un restaurant italien nommé Siena, en langue '{lang}'. L'avis doit sembler authentique et personnel. Incorpore les éléments suivants de manière naturelle:\n"
+        for category, values in details.items():
+            if category != 'server_name':
+                prompt_text += f"- {category}: {', '.join(values)}\n"
+        prompt_text += "\nL'avis doit faire environ 4-6 phrases. Varie le style pour ne pas être répétitif."
+
         completion = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -182,10 +187,11 @@ def generate_review():
         review = completion.choices[0].message.content
         return jsonify({"review": review.strip()})
     except Exception as e:
-        print(f"Erreur OpenAI: {e}")
+        db.session.rollback()
+        print(f"Erreur OpenAI ou DB: {e}")
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ROUTE DU DASHBOARD ---
+# --- ROUTES DU DASHBOARD ---
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
@@ -194,12 +200,50 @@ def dashboard_data():
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
         ).group_by(GeneratedReview.server_name).order_by(func.count(GeneratedReview.id).desc()).all()
-        
         data = [{"server": server, "count": count} for server, count in results]
         return jsonify(data)
     except Exception as e:
         print(f"Erreur du dashboard: {e}")
         return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
+
+# --- ROUTE CORRIGÉE : PERFORMANCE DU MENU ---
+@app.route('/api/menu-performance')
+@password_protected
+def menu_performance_data():
+    period = request.args.get('period', 'all')
+    
+    try:
+        query = db.session.query(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category,
+            func.count(MenuSelection.id).label('selection_count')
+        )
+
+        # CORRECTION : Utilisation des fonctions de la base de données pour un filtrage
+        # par date qui est compatible avec les fuseaux horaires.
+        if period == '7days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
+        elif period == '30days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
+        
+        results = query.group_by(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category
+        ).order_by(
+            func.count(MenuSelection.id).desc()
+        ).all()
+
+        data = [{
+            "dish_name": name,
+            "dish_category": category,
+            "selection_count": count
+        } for name, category, count in results]
+        
+        return jsonify(data)
+    except Exception as e:
+        # Ajout d'un log pour voir l'erreur côté serveur
+        print(f"Erreur dans /api/menu-performance: {e}")
+        return jsonify({"error": "Une erreur est survenue lors du chargement des données de performance."}), 500
 
 # --- POINT D'ENTRÉE POUR RENDER ---
 if __name__ == '__main__':
