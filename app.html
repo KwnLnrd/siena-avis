@@ -47,7 +47,7 @@
         <div class="language-switcher">
             <button class="lang-btn" data-lang="fr">🇫🇷 FR</button>
             <button class="lang-btn" data-lang="en">🇬🇧 EN</button>
-            <button class="lang-btn" data-lang="es">🇪🇸 ES</button>
+            <button class="lang-btn" data-lang="es">�🇸 ES</button>
             <button class="lang-btn" data-lang="it">🇮🇹 IT</button>
             <button class="lang-btn" data-lang="pt">🇵🇹 PT</button>
             <button class="lang-btn" data-lang="zh">🇨🇳 ZH</button>
@@ -82,10 +82,7 @@
             <div class="tag-section">
                 <h3 data-translate-key="server_title"></h3>
                 <select id="server-select" data-category="server_name">
-                    <option value="" data-translate-key="server_choose"></option>
-                    <!-- Liste des serveurs statique en cas de secours -->
-                    <option value="Kewan">Kewan</option>
-                    <option value="Camille">Camille</option>
+                    <option value="" data-translate-key="server_choose">-- Chargement --</option>
                 </select>
                 <div id="service-qualities-container" class="dropdown-container">
                     <p style="font-size: 0.9rem; margin-top: 20px; margin-bottom: 10px;" data-translate-key="service_subtitle"></p>
@@ -109,7 +106,7 @@
             <div class="tag-section">
                 <h3 data-translate-key="atmosphere_title"></h3>
                 <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
-                <div class="tag-group" data-category="atmosphere">
+                <div class="tag-group" data-category="atmosphere" id="atmosphere-content">
                     <!-- L'ambiance sera chargée ici -->
                 </div>
             </div>
@@ -129,260 +126,32 @@
         </footer>
     </div>
     <script>
-        // --- SCRIPT COMPLET AVEC TRADUCTION DYNAMIQUE ---
         document.addEventListener('DOMContentLoaded', () => {
+            // --- CONFIGURATION ---
+            // MODIFICATION: URL absolue vers votre backend sur Render
+            const API_BASE_URL = 'https://siena-avis.onrender.com';
+
             // --- 1. GESTION DES TRADUCTIONS ---
             const translations = {
                 fr: {
-                    page_title: "Votre Avis sur Siena Paris",
-                    main_title: "Une soirée mémorable ?",
-                    subtitle: "Votre avis est la touche finale de votre expérience. Partagez ce qui a enchanté vos sens.",
-                    occasion_title: "Une occasion spéciale ?",
-                    occasion_birthday: "Anniversaire",
-                    occasion_romantic: "Dîner romantique",
-                    occasion_friends: "Dîner entre amis",
-                    occasion_visit: "Simple visite",
-                    birthday_who: "C'était l'anniversaire de qui ?",
-                    birthday_father: "Père",
-                    birthday_mother: "Mère",
-                    birthday_husband: "Mari",
-                    birthday_wife: "Femme",
-                    birthday_son: "Fils",
-                    birthday_daughter: "Fille",
-                    birthday_friend: "Ami(e)",
-                    server_title: "Quel serveur souhaitez-vous féliciter ?",
-                    server_choose: "-- Choisissez un prénom --",
-                    service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)",
-                    service_q1: "Attentionné",
-                    service_q2: "Souriant",
-                    service_q3: "Professionnel",
-                    service_q4: "Efficace",
-                    service_q5: "De bon conseil",
-                    service_q6: "Discret",
-                    flavors_title: "Les saveurs qui vous ont marqué",
-                    flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.",
-                    atmosphere_title: "L'atmosphère du lieu",
-                    atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.",
-                    generate_button: "Générer mon avis",
-                    copy_button: "Copier le texte",
-                    publish_button: "Publier mon avis sur Google",
-                    footer_rights: "Tous droits réservés.",
-                    loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."],
-                    alert_no_option: "Veuillez sélectionner au moins une option pour décrire votre expérience.",
-                    alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
+                    page_title: "Votre Avis sur Siena Paris", main_title: "Une soirée mémorable ?", subtitle: "Votre avis est la touche finale de votre expérience. Partagez ce qui a enchanté vos sens.", occasion_title: "Une occasion spéciale ?", occasion_birthday: "Anniversaire", occasion_romantic: "Dîner romantique", occasion_friends: "Dîner entre amis", occasion_visit: "Simple visite", birthday_who: "C'était l'anniversaire de qui ?", birthday_father: "Père", birthday_mother: "Mère", birthday_husband: "Mari", birthday_wife: "Femme", birthday_son: "Fils", birthday_daughter: "Fille", birthday_friend: "Ami(e)", server_title: "Quel serveur souhaitez-vous féliciter ?", server_choose: "-- Choisissez un prénom --", service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)", service_q1: "Attentionné", service_q2: "Souriant", service_q3: "Professionnel", service_q4: "Efficace", service_q5: "De bon conseil", service_q6: "Discret", flavors_title: "Les saveurs qui vous ont marqué", flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.", atmosphere_title: "L'atmosphère du lieu", atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.", generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], alert_no_option: "Veuillez sélectionner au moins une option pour décrire votre expérience.", alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
                 },
                 en: {
-                    page_title: "Your Feedback on Siena Paris",
-                    main_title: "A memorable evening?",
-                    subtitle: "Your feedback is the finishing touch. Share what delighted your senses.",
-                    occasion_title: "A special occasion?",
-                    occasion_birthday: "Birthday",
-                    occasion_romantic: "Romantic dinner",
-                    occasion_friends: "Dinner with friends",
-                    occasion_visit: "Just visiting",
-                    birthday_who: "Whose birthday was it?",
-                    birthday_father: "Father",
-                    birthday_mother: "Mother",
-                    birthday_husband: "Husband",
-                    birthday_wife: "Wife",
-                    birthday_son: "Son",
-                    birthday_daughter: "Daughter",
-                    birthday_friend: "Friend",
-                    server_title: "Which server would you like to praise?",
-                    server_choose: "-- Choose a name --",
-                    service_subtitle: "What did you particularly appreciate? (3 choices max)",
-                    service_q1: "Attentive",
-                    service_q2: "Smiling",
-                    service_q3: "Professional",
-                    service_q4: "Efficient",
-                    service_q5: "Great advice",
-                    service_q6: "Discreet",
-                    flavors_title: "The flavors that stood out",
-                    flavors_subtitle: "Choose up to 6 of your favorites.",
-                    atmosphere_title: "The atmosphere",
-                    atmosphere_subtitle: "Select up to 3 options.",
-                    generate_button: "Generate my review",
-                    copy_button: "Copy text",
-                    publish_button: "Publish review on Google",
-                    footer_rights: "All rights reserved.",
-                    loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."],
-                    alert_no_option: "Please select at least one option to describe your experience.",
-                    alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
+                    page_title: "Your Feedback on Siena Paris", main_title: "A memorable evening?", subtitle: "Your feedback is the finishing touch. Share what delighted your senses.", occasion_title: "A special occasion?", occasion_birthday: "Birthday", occasion_romantic: "Romantic dinner", occasion_friends: "Dinner with friends", occasion_visit: "Just visiting", birthday_who: "Whose birthday was it?", birthday_father: "Father", birthday_mother: "Mother", birthday_husband: "Husband", birthday_wife: "Wife", birthday_son: "Son", birthday_daughter: "Daughter", birthday_friend: "Friend", server_title: "Which server would you like to praise?", server_choose: "-- Choose a name --", service_subtitle: "What did you particularly appreciate? (3 choices max)", service_q1: "Attentive", service_q2: "Smiling", service_q3: "Professional", service_q4: "Efficient", service_q5: "Great advice", service_q6: "Discreet", flavors_title: "The flavors that stood out", flavors_subtitle: "Choose up to 6 of your favorites.", atmosphere_title: "The atmosphere", atmosphere_subtitle: "Select up to 3 options.", generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], alert_no_option: "Please select at least one option to describe your experience.", alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
                 },
-                es: {
-                    page_title: "Tu Opinión sobre Siena Paris",
-                    main_title: "¿Una noche memorable?",
-                    subtitle: "Tu opinión es el toque final. Comparte lo que deleitó tus sentidos.",
-                    occasion_title: "¿Una ocasión especial?",
-                    occasion_birthday: "Cumpleaños",
-                    occasion_romantic: "Cena romántica",
-                    occasion_friends: "Cena entre amigos",
-                    occasion_visit: "Simple visita",
-                    birthday_who: "¿De quién era el cumpleaños?",
-                    birthday_father: "Padre",
-                    birthday_mother: "Madre",
-                    birthday_husband: "Esposo",
-                    birthday_wife: "Esposa",
-                    birthday_son: "Hijo",
-                    birthday_daughter: "Hija",
-                    birthday_friend: "Amigo(a)",
-                    server_title: "¿A qué camarero te gustaría felicitar?",
-                    server_choose: "-- Elige un nombre --",
-                    service_subtitle: "¿Qué te gustó especialmente? (3 opciones máx.)",
-                    service_q1: "Atento",
-                    service_q2: "Sonriente",
-                    service_q3: "Profesional",
-                    service_q4: "Eficiente",
-                    service_q5: "Buen consejero",
-                    service_q6: "Discreto",
-                    flavors_title: "Los sabores que te marcaron",
-                    flavors_subtitle: "Elige hasta 6 de tus favoritos.",
-                    atmosphere_title: "El ambiente del lugar",
-                    atmosphere_subtitle: "Selecciona hasta 3 opciones.",
-                    generate_button: "Generar mi opinión",
-                    copy_button: "Copiar texto",
-                    publish_button: "Publicar en Google",
-                    footer_rights: "Todos los derechos reservados.",
-                    loading_messages: ["Contactando a nuestro asistente...","Analizando tu noche...","La inspiración está en camino...","Finalizando el borrador..."],
-                    alert_no_option: "Por favor, selecciona al menos una opción para describir tu experiencia.",
-                    alert_limit: (limit) => `Solo puedes seleccionar hasta ${limit} opciones en esta categoría.`
-                },
-                it: {
-                    page_title: "La tua Recensione su Siena Paris",
-                    main_title: "Una serata memorabile?",
-                    subtitle: "La tua opinione è il tocco finale. Condividi ciò che ha deliziato i tuoi sensi.",
-                    occasion_title: "Un'occasione speciale?",
-                    occasion_birthday: "Compleanno",
-                    occasion_romantic: "Cena romantica",
-                    occasion_friends: "Cena tra amici",
-                    occasion_visit: "Semplice visita",
-                    birthday_who: "Di chi era il compleanno?",
-                    birthday_father: "Padre",
-                    birthday_mother: "Madre",
-                    birthday_husband: "Marito",
-                    birthday_wife: "Moglie",
-                    birthday_son: "Figlio",
-                    birthday_daughter: "Figlia",
-                    birthday_friend: "Amico(a)",
-                    server_title: "Quale cameriere vorresti elogiare?",
-                    server_choose: "-- Scegli un nome --",
-                    service_subtitle: "Cosa hai apprezzato in particolare? (max 3 opzioni)",
-                    service_q1: "Attento",
-                    service_q2: "Sorridente",
-                    service_q3: "Professionale",
-                    service_q4: "Efficiente",
-                    service_q5: "Ottimo consiglio",
-                    service_q6: "Discreto",
-                    flavors_title: "I sapori che ti hanno colpito",
-                    flavors_subtitle: "Scegli fino a 6 dei tuoi preferiti.",
-                    atmosphere_title: "L'atmosfera del locale",
-                    atmosphere_subtitle: "Seleziona fino a 3 opzioni.",
-                    generate_button: "Genera la mia recensione",
-                    copy_button: "Copia il testo",
-                    publish_button: "Pubblica su Google",
-                    footer_rights: "Tutti i diritti riservati.",
-                    loading_messages: ["Contattando il nostro assistente...","Analizzando la tua serata...","L'ispirazione è in arrivo...","Finalizzando la bozza..."],
-                    alert_no_option: "Seleziona almeno un'opzione per descrivere la tua esperienza.",
-                    alert_limit: (limit) => `Puoi selezionare solo fino a ${limit} opzioni in questa categoria.`
-                },
-                pt: {
-                    page_title: "A sua Avaliação sobre o Siena Paris",
-                    main_title: "Uma noite memorável?",
-                    subtitle: "A sua opinião é o toque final. Partilhe o que encantou os seus sentidos.",
-                    occasion_title: "Uma ocasião especial?",
-                    occasion_birthday: "Aniversário",
-                    occasion_romantic: "Jantar romântico",
-                    occasion_friends: "Jantar entre amigos",
-                    occasion_visit: "Simples visita",
-                    birthday_who: "De quem era o aniversário?",
-                    birthday_father: "Pai",
-                    birthday_mother: "Mãe",
-                    birthday_husband: "Marido",
-                    birthday_wife: "Esposa",
-                    birthday_son: "Filho",
-                    birthday_daughter: "Filha",
-                    birthday_friend: "Amigo(a)",
-                    server_title: "Qual empregado gostaria de elogiar?",
-                    server_choose: "-- Escolha um nome --",
-                    service_subtitle: "O que apreciou particularmente? (máx. 3 opções)",
-                    service_q1: "Atencioso",
-                    service_q2: "Sorridente",
-                    service_q3: "Profissional",
-                    service_q4: "Eficiente",
-                    service_q5: "Bons conselhos",
-                    service_q6: "Discreto",
-                    flavors_title: "Os sabores que o marcaram",
-                    flavors_subtitle: "Escolha até 6 dos seus favoritos.",
-                    atmosphere_title: "A atmosfera do local",
-                    atmosphere_subtitle: "Selecione até 3 opções.",
-                    generate_button: "Gerar a minha avaliação",
-                    copy_button: "Copiar texto",
-                    publish_button: "Publicar no Google",
-                    footer_rights: "Todos os direitos reservados.",
-                    loading_messages: ["A contactar o nosso assistente...","A analisar a sua noite...","A inspiração está a caminho...","A finalizar o rascunho..."],
-                    alert_no_option: "Por favor, selecione pelo menos uma opção para descrever a sua experiência.",
-                    alert_limit: (limit) => `Só pode selecionar até ${limit} opções nesta categoria.`
-                },
-                zh: {
-                    page_title: "您对 Siena Paris 的评价",
-                    main_title: "一个难忘的夜晚？",
-                    subtitle: "您的反馈是我们体验的最后一笔。分享令您感官愉悦的瞬间。",
-                    occasion_title: "特殊场合？",
-                    occasion_birthday: "生日",
-                    occasion_romantic: "浪漫晚餐",
-                    occasion_friends: "朋友聚餐",
-                    occasion_visit: "只是来访",
-                    birthday_who: "是谁的生日？",
-                    birthday_father: "父亲",
-                    birthday_mother: "母亲",
-                    birthday_husband: "丈夫",
-                    birthday_wife: "妻子",
-                    birthday_son: "儿子",
-                    birthday_daughter: "女儿",
-                    birthday_friend: "朋友",
-                    server_title: "您想表扬哪位服务员？",
-                    server_choose: "-- 请选择一个名字 --",
-                    service_subtitle: "您特别欣赏什么？ (最多3项)",
-                    service_q1: "周到",
-                    service_q2: "微笑",
-                    service_q3: "专业",
-                    service_q4: "高效",
-                    service_q5: "建议很棒",
-                    service_q6: "不打扰",
-                    flavors_title: "让您印象深刻的风味",
-                    flavors_subtitle: "最多选择6个您的最爱。",
-                    atmosphere_title: "餐厅氛围",
-                    atmosphere_subtitle: "最多选择3个选项。",
-                    generate_button: "生成我的评价",
-                    copy_button: "复制文本",
-                    publish_button: "在谷歌上发布",
-                    footer_rights: "版权所有。",
-                    loading_messages: ["联系我们的创意助手...","分析您难忘的夜晚...","灵感正在路上...","完成草稿..."],
-                    alert_no_option: "请至少选择一个选项来描述您的体验。",
-                    alert_limit: (limit) => `您最多只能在此类别中选择 ${limit} 个选项。`
-                }
             };
-
             let currentLang = 'fr';
-
             function setLanguage(lang) {
                 if (!translations[lang]) lang = 'fr';
                 currentLang = lang;
                 document.documentElement.lang = lang;
                 document.title = translations[lang].page_title;
-
                 document.querySelectorAll('[data-translate-key]').forEach(el => {
                     const key = el.dataset.translateKey;
-                    if (translations[lang][key]) {
-                        if (typeof translations[lang][key] === 'function') {
-                            // Pour les alertes dynamiques
-                        } else {
-                            el.textContent = translations[lang][key];
-                        }
+                    if (translations[lang][key] && typeof translations[lang][key] === 'string') {
+                         el.textContent = translations[lang][key];
                     }
                 });
-
-                // Met à jour le bouton de langue actif
                 document.querySelectorAll('.lang-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.lang === lang);
                 });
@@ -390,42 +159,86 @@
 
             // --- 2. SÉLECTION DES ÉLÉMENTS DU DOM ---
             const reviewForm = document.getElementById('review-form');
-            const generateBtn = document.getElementById('generate-btn');
+            const resultArea = document.getElementById('result-area');
+            const copyBtn = document.getElementById('copy-btn');
+            const reviewText = document.getElementById('review-text');
+            const serverSelect = document.getElementById('server-select');
+            const dishesContainer = document.getElementById('dishes-content');
+            const atmosphereContainer = document.getElementById('atmosphere-content');
+            const serviceQualitiesContainer = document.getElementById('service-qualities-container');
+            const birthdayDetailsContainer = document.getElementById('birthday_details_container');
+            const eventRadios = document.querySelectorAll('input[name="event"]');
             const loaderContainer = document.getElementById('loader');
             const loaderText = document.getElementById('loader-text');
-            const resultArea = document.getElementById('result-area');
-            const reviewText = document.getElementById('review-text');
-            const copyBtn = document.getElementById('copy-btn');
-            const eventRadios = document.querySelectorAll('input[name="event"]');
-            const birthdayDetailsContainer = document.getElementById('birthday_details_container');
-            const birthdayDetailsSelect = document.getElementById('birthday_details');
-            const serverSelect = document.getElementById('server-select');
-            const serviceQualitiesContainer = document.getElementById('service-qualities-container');
-            const dishesContainer = document.getElementById('dishes-content');
-            const atmosphereContainer = document.querySelector('[data-category="atmosphere"]');
             const langButtons = document.querySelectorAll('.lang-btn');
             let messageInterval;
             const limitConfig = { "atmosphere": 3, "dishes-section-limiter": 6, "service_qualities": 3 };
+            
+            // --- 3. CHARGEMENT DES DONNÉES DYNAMIQUES ---
+            async function loadPublicData() {
+                try {
+                    const [serversRes, flavorsRes, atmospheresRes] = await Promise.all([
+                        fetch(`${API_BASE_URL}/api/public/servers`),
+                        fetch(`${API_BASE_URL}/api/public/flavors`),
+                        fetch(`${API_BASE_URL}/api/public/atmospheres`)
+                    ]);
+                    
+                    // Servers
+                    const servers = await serversRes.json();
+                    serverSelect.innerHTML = `<option value="" data-translate-key="server_choose">${translations[currentLang].server_choose}</option>`;
+                    servers.forEach(server => {
+                        serverSelect.innerHTML += `<option value="${server.name}">${server.name}</option>`;
+                    });
 
-            // --- 3. LOGIQUE DE L'APPLICATION ---
-            
-            // Chargement des données dynamiques (serveurs, plats, etc.)
-            // Note: Pour une version simplifiée sans base de données, on peut mettre les données ici.
-            // Pour l'instant, on laisse la version statique pour garantir la stabilité.
-            
-            // Gestion du changement de langue
+                    // Flavors (Dishes)
+                    const flavors = await flavorsRes.json();
+                    dishesContainer.innerHTML = '';
+                    for (const category in flavors) {
+                        dishesContainer.innerHTML += `<h4 class="dish-subcategory">${category}</h4>`;
+                        const group = document.createElement('div');
+                        group.className = 'tag-group';
+                        group.dataset.category = 'liked_dishes';
+                        flavors[category].forEach(flavor => {
+                            group.innerHTML += `
+                                <input type="checkbox" id="flavor_${flavor.id}" value="${flavor.text}">
+                                <label for="flavor_${flavor.id}">${flavor.text}</label>
+                            `;
+                        });
+                        dishesContainer.appendChild(group);
+                    }
+
+                    // Atmospheres
+                    const atmospheres = await atmospheresRes.json();
+                    atmosphereContainer.innerHTML = '';
+                    atmospheres.forEach(atmosphere => {
+                        atmosphereContainer.innerHTML += `
+                            <input type="checkbox" id="atmosphere_${atmosphere.id}" value="${atmosphere.text}">
+                            <label for="atmosphere_${atmosphere.id}">${atmosphere.text}</label>
+                        `;
+                    });
+
+                } catch (error) {
+                    console.error("Erreur de chargement des données publiques:", error);
+                    // On pourrait afficher un message d'erreur à l'utilisateur ici
+                }
+            }
+
+
+            // --- 4. LOGIQUE DE L'APPLICATION ---
             langButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     setLanguage(btn.dataset.lang);
                 });
             });
-
-            // Initialisation de la langue au chargement
-            const initialLang = (window.location.hash.substring(1) || navigator.language.split('-')[0]);
-            setLanguage(initialLang);
             
             serverSelect.addEventListener('change', () => {
                 serviceQualitiesContainer.classList.toggle('visible', !!serverSelect.value);
+            });
+
+            eventRadios.forEach(radio => { 
+                radio.addEventListener('change', (e) => { 
+                    birthdayDetailsContainer.classList.toggle('visible', e.target.id === 'event_birthday'); 
+                }); 
             });
 
             reviewForm.addEventListener('change', (e) => {
@@ -433,13 +246,12 @@
                 let container, limitKey;
                 const limiterSection = e.target.closest('#dishes-section-limiter');
                 const serviceSection = e.target.closest('#service-qualities-container');
-                const simpleSection = e.target.closest('.tag-section');
+                const atmosphereSection = e.target.closest('#atmosphere-content');
+                
                 if (limiterSection) { container = limiterSection; limitKey = 'dishes-section-limiter'; }
-                else if (serviceSection) { container = serviceSection; limitKey = 'service_qualities'; }
-                else if (simpleSection) {
-                    const tagGroup = simpleSection.querySelector('.tag-group');
-                    if (tagGroup) { limitKey = tagGroup.dataset.category; container = simpleSection; }
-                }
+                else if (serviceSection) { container = serviceSection.parentElement; limitKey = 'service_qualities'; }
+                else if (atmosphereSection) { container = atmosphereSection.parentElement; limitKey = 'atmosphere'; }
+
                 const limit = limitConfig[limitKey];
                 if (container && limit) {
                     if (container.querySelectorAll('input[type="checkbox"]:checked').length > limit) {
@@ -448,8 +260,6 @@
                     }
                 }
             });
-
-            eventRadios.forEach(radio => { radio.addEventListener('change', (e) => { birthdayDetailsContainer.classList.toggle('visible', e.target.id === 'event_birthday'); }); });
 
             reviewForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -461,13 +271,17 @@
                     const group = input.closest('.tag-group');
                     if(group) selectedTags.push({ category: group.dataset.category, value: input.value });
                 });
-                if (document.getElementById('event_birthday').checked && birthdayDetailsSelect.value) {
-                    selectedTags.push({ category: 'birthday_details', value: birthdayDetailsSelect.options[birthdayDetailsSelect.selectedIndex].text });
+                
+                const birthdaySelect = document.getElementById('birthday_details');
+                if (document.getElementById('event_birthday').checked && birthdaySelect.value) {
+                    selectedTags.push({ category: 'birthday_details', value: birthdaySelect.options[birthdaySelect.selectedIndex].text });
                 }
+                
                 if (selectedTags.length === 0) {
                     alert(translations[currentLang].alert_no_option);
                     return;
                 }
+                
                 reviewForm.classList.add('hidden');
                 loaderContainer.classList.remove('hidden');
                 let messageIndex = 0;
@@ -477,8 +291,9 @@
                     messageIndex = (messageIndex + 1) % loadingMessages.length;
                     loaderText.textContent = loadingMessages[messageIndex];
                 }, 2500);
+                
                 try {
-                    const generatedReview = await realApiCall(selectedTags);
+                    const generatedReview = await generateReviewApiCall(selectedTags);
                     reviewText.value = generatedReview;
                     resultArea.classList.remove('hidden');
                 } catch (error) {
@@ -491,18 +306,32 @@
                 }
             });
             
-            copyBtn.addEventListener('click', () => { navigator.clipboard.writeText(reviewText.value).then(() => { copyBtn.textContent = 'Copié !'; setTimeout(() => { copyBtn.textContent = translations[currentLang].copy_button; }, 2000); }); });
+            copyBtn.addEventListener('click', () => { 
+                navigator.clipboard.writeText(reviewText.value).then(() => { 
+                    copyBtn.textContent = 'Copié !'; 
+                    setTimeout(() => { copyBtn.textContent = translations[currentLang].copy_button; }, 2000); 
+                }); 
+            });
 
-            async function realApiCall(tags) {
-                const apiUrl = 'https://siena-avis.onrender.com'; 
-                const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: currentLang, tags: tags }), });
+            async function generateReviewApiCall(tags) {
+                const response = await fetch(`${API_BASE_URL}/generate-review`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ lang: currentLang, tags: tags }), 
+                });
                 if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
                 const data = await response.json();
+                if (data.error) throw new Error(data.error);
                 return data.review;
             }
 
+            // --- 5. INITIALISATION ---
+            const initialLang = (window.location.hash.substring(1) || navigator.language.split('-')[0]);
+            setLanguage(initialLang);
+            loadPublicData();
             document.getElementById('copyright-year').textContent = new Date().getFullYear();
         });
     </script>
 </body>
 </html>
+�
