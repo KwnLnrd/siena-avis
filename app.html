@@ -40,9 +40,25 @@
         .language-switcher { margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; }
         .lang-btn { background-color: #F7F1E9; border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
         .lang-btn.active { background-color: var(--brand-color); color: white; border-color: var(--brand-color); }
-        .private-feedback-container { text-align: left; margin-top: 20px; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out; }
-        .private-feedback-container.visible { max-height: 200px; }
-        .private-feedback-container textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; min-height: 100px; margin-top: 10px; }
+        .private-feedback-container {
+            text-align: left;
+            margin-top: 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out;
+        }
+        .private-feedback-container.visible {
+            max-height: 200px;
+        }
+        .private-feedback-container textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 100px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -146,15 +162,14 @@
                     page_title: "Votre Avis sur Siena Paris", main_title: "Une soirée mémorable ?", subtitle: "Votre avis est la touche finale de votre expérience. Partagez ce qui a enchanté vos sens.", occasion_title: "Une occasion spéciale ?", occasion_birthday: "Anniversaire", occasion_romantic: "Dîner romantique", occasion_friends: "Dîner entre amis", occasion_visit: "Simple visite", birthday_who: "C'était l'anniversaire de qui ?", birthday_father: "Père", birthday_mother: "Mère", birthday_husband: "Mari", birthday_wife: "Femme", birthday_son: "Fils", birthday_daughter: "Fille", birthday_friend: "Ami(e)", server_title: "Quel serveur souhaitez-vous féliciter ?", server_choose: "-- Choisissez un prénom --", service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)", service_q1: "Attentionné", service_q2: "Souriant", service_q3: "Professionnel", service_q4: "Efficace", service_q5: "De bon conseil", service_q6: "Discret", flavors_title: "Les saveurs qui vous ont marqué", flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.", atmosphere_title: "L'atmosphère du lieu", atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.",
                     atmosphere_decoration: "La Décoration", atmosphere_music: "La Musique Live", atmosphere_energy: "L'Énergie Festive", atmosphere_lighting: "L'Éclairage Intime", atmosphere_comfort: "Le Confort", atmosphere_photo: "Idéal pour les photos",
                     private_feedback_label: "J'ai une suggestion privée pour l'équipe", private_feedback_placeholder: "Votre suggestion nous aidera à nous améliorer...",
-                    generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], alert_no_option: "Veuillez sélectionner au moins une option pour décrire votre expérience.", alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
+                    generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], alert_no_option: "Veuillez sélectionner au moins une option ou laisser un feedback privé.", alert_limit: (limit) => `Vous ne pouvez sélectionner que ${limit} options maximum dans cette catégorie.`
                 },
                 en: {
                     page_title: "Your Feedback on Siena Paris", main_title: "A memorable evening?", subtitle: "Your feedback is the finishing touch. Share what delighted your senses.", occasion_title: "A special occasion?", occasion_birthday: "Birthday", occasion_romantic: "Romantic dinner", occasion_friends: "Dinner with friends", occasion_visit: "Just visiting", birthday_who: "Whose birthday was it?", birthday_father: "Father", birthday_mother: "Mother", birthday_husband: "Husband", birthday_wife: "Wife", birthday_son: "Son", birthday_daughter: "Daughter", birthday_friend: "Friend", server_title: "Which server would you like to praise?", server_choose: "-- Choose a name --", service_subtitle: "What did you particularly appreciate? (3 choices max)", service_q1: "Attentive", service_q2: "Smiling", service_q3: "Professional", service_q4: "Efficient", service_q5: "Great advice", service_q6: "Discreet", flavors_title: "The flavors that stood out", flavors_subtitle: "Choose up to 6 of your favorites.", atmosphere_title: "The atmosphere", atmosphere_subtitle: "Select up to 3 options.",
                     atmosphere_decoration: "The Decoration", atmosphere_music: "Live Music", atmosphere_energy: "Festive Energy", atmosphere_lighting: "Intimate Lighting", atmosphere_comfort: "The Comfort", atmosphere_photo: "Ideal for photos",
                     private_feedback_label: "I have a private suggestion for the team", private_feedback_placeholder: "Your suggestion will help us improve...",
-                    generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], alert_no_option: "Please select at least one option to describe your experience.", alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
+                    generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], alert_no_option: "Please select at least one option or leave private feedback.", alert_limit: (limit) => `You can only select up to ${limit} options in this category.`
                 },
-                // ... (autres langues omises pour la lisibilité)
             };
 
             let currentLang = 'fr';
@@ -299,10 +314,12 @@
                     const select = document.getElementById('birthday_details');
                     selectedTags.push({ category: 'birthday_details', value: select.options[select.selectedIndex].text });
                 }
+                
                 if (selectedTags.length === 0 && !privateFeedbackText.value.trim()) {
                     alert(translations[currentLang].alert_no_option);
                     return;
                 }
+
                 reviewForm.classList.add('hidden');
                 loaderContainer.classList.remove('hidden');
                 let messageIndex = 0;
@@ -326,7 +343,13 @@
                     });
                     if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
                     const data = await response.json();
-                    reviewText.value = data.review;
+                    
+                    // Si aucun avis public n'a été généré (cas feedback privé seul), on affiche un message de remerciement
+                    if (data.review) {
+                        reviewText.value = data.review;
+                    } else {
+                        reviewText.value = "Merci pour votre retour !";
+                    }
                     resultArea.classList.remove('hidden');
                 } catch (error) {
                     console.error('Erreur lors de la génération :', error);
