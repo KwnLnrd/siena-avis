@@ -241,4 +241,101 @@ def dashboard_data():
         return jsonify(data)
     except Exception as e:
         print(f"Erreur du dashboard: {e}")
-      
+        return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
+
+# --- ENDPOINTS DE GESTION DU FEEDBACK ---
+@app.route('/api/internal-feedback', methods=['GET'])
+@password_protected
+def get_internal_feedback():
+    status_filter = request.args.get('status', 'new')
+    
+    try:
+        query = db.session.query(
+            InternalFeedback,
+            Server.name
+        ).outerjoin(
+            Server, InternalFeedback.associated_server_id == Server.id
+        ).filter(
+            InternalFeedback.status == status_filter
+        ).order_by(
+            desc(InternalFeedback.created_at)
+        )
+
+        results = query.all()
+
+        feedbacks = []
+        for feedback, server_name in results:
+            feedbacks.append({
+                "id": feedback.id,
+                "feedback_text": feedback.feedback_text,
+                "status": feedback.status,
+                "created_at": feedback.created_at.isoformat(),
+                "server_name": server_name if server_name else "Non spécifié"
+            })
+            
+        return jsonify(feedbacks)
+    except Exception as e:
+        print(f"Erreur dans /api/internal-feedback: {e}")
+        return jsonify({"error": "Impossible de charger les feedbacks."}), 500
+
+@app.route('/api/internal-feedback/<int:feedback_id>/status', methods=['PUT'])
+@password_protected
+def update_feedback_status(feedback_id):
+    data = request.get_json()
+    new_status = data.get('status')
+
+    if not new_status or new_status not in ['read', 'archived', 'new']:
+        return jsonify({"error": "Statut invalide."}), 400
+
+    feedback = db.session.get(InternalFeedback, feedback_id)
+    if not feedback:
+        return jsonify({"error": "Feedback non trouvé."}), 404
+
+    try:
+        feedback.status = new_status
+        db.session.commit()
+        return jsonify({"success": True, "message": f"Feedback {feedback_id} mis à jour à '{new_status}'."})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erreur de mise à jour du statut du feedback: {e}")
+        return jsonify({"error": "Erreur lors de la mise à jour du statut."}), 500
+
+# --- ROUTE PERFORMANCE DU MENU ---
+@app.route('/api/menu-performance')
+@password_protected
+def menu_performance_data():
+    period = request.args.get('period', 'all')
+    
+    try:
+        query = db.session.query(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category,
+            func.count(MenuSelection.id).label('selection_count')
+        )
+
+        if period == '7days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
+        elif period == '30days':
+            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
+        
+        results = query.group_by(
+            MenuSelection.dish_name,
+            MenuSelection.dish_category
+        ).order_by(
+            func.count(MenuSelection.id).desc()
+        ).all()
+
+        data = [{
+            "dish_name": name,
+            "dish_category": category,
+            "selection_count": count
+        } for name, category, count in results]
+        
+        return jsonify(data)
+    except Exception as e:
+        print(f"Erreur dans /api/menu-performance: {e}")
+        return jsonify({"error": "Une erreur est survenue lors du chargement des données de performance."}), 500
+
+# --- POINT D'ENTRÉE POUR RENDER ---
+if __name__ == '__main__':
+    app.run(debug=False)
