@@ -14,7 +14,7 @@ load_dotenv()
 
 # Initialise l'application Flask
 app = Flask(__name__)
-<<<<<<< HEAD
+
 # Permettre les requêtes depuis votre domaine Netlify et en local pour les tests
 CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", "http://127.0.0.1:5500", "null"]}})
 
@@ -23,32 +23,31 @@ CORS(app, resources={r"/*": {"origins": ["https://sienarestaurant.netlify.app", 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES ---
-=======
+
 # Active CORS pour autoriser les requêtes depuis d'autres origines (utile pour le développement)
 CORS(app) 
 
 # --- CONFIGURATION DE LA BASE DE DONNÉES ---
 # Utilise la variable d'environnement DATABASE_URL (pour Heroku/Render) ou une base de données SQLite locale par défaut
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
-database_url = os.getenv('DATABASE_URL')
+
 if database_url and database_url.startswith("postgres://"):
     # Render utilise "postgres://", SQLAlchemy préfère "postgresql://"
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace("postgres://", "postgresql://", 1)
 else:
-<<<<<<< HEAD
+
     # Fallback pour le développement local
-=======
+
     # Si aucune DATABASE_URL n'est définie, on utilise un fichier de base de données local
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'siena_data.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-<<<<<<< HEAD
+
 # Assurez-vous que la variable d'environnement DASHBOARD_PASSWORD est définie sur Render
-=======
+
 # Récupère le mot de passe du dashboard depuis les variables d'environnement ou utilise une valeur par défaut
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
 DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'siena_secret_password')
 db = SQLAlchemy(app)
 
@@ -87,7 +86,7 @@ def password_protected(f):
         return f(*args, **kwargs)
     return decorated_function
 
-<<<<<<< HEAD
+
 # --- COMMANDE D'INITIALISATION DB ---
 @app.cli.command("init-db")
 def init_db_command():
@@ -98,10 +97,10 @@ def init_db_command():
         db.session.add_all([Server(name='Kewan'), Server(name='Camille')])
         db.session.commit()
     print("Base de données initialisée.")
-=======
+
 # --- ROUTES API (PROTÉGÉES) POUR LA GESTION ---
 # Ces routes nécessitent le mot de passe pour fonctionner
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
 
 @app.route('/api/servers', methods=['GET', 'POST'])
 @password_protected
@@ -132,15 +131,15 @@ def delete_server(server_id):
 @app.route('/api/options/<option_type>', methods=['GET', 'POST'])
 @password_protected
 def manage_options(option_type):
-<<<<<<< HEAD
+
     MODELS = {'flavors': FlavorOption, 'atmospheres': AtmosphereOption}
     Model = MODELS.get(option_type)
     if not Model: return jsonify({"error": "Type d'option invalide"}), 404
     
-=======
+
     """Gérer les options (saveurs/ambiance) : lister (GET) ou ajouter (POST)."""
     Model = FlavorOption if option_type == 'flavors' else AtmosphereOption
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
     if request.method == 'POST':
         data = request.get_json()
         if not data or not data.get('text'): return jsonify({"error": "Texte manquant."}), 400
@@ -151,14 +150,14 @@ def manage_options(option_type):
         new_option = Model(**new_option_data)
         db.session.add(new_option)
         db.session.commit()
-<<<<<<< HEAD
+
         result = {"id": new_option.id, "text": new_option.text}
         if option_type == 'flavors': result['category'] = new_option.category
         return jsonify(result), 201
 
-=======
+
         return jsonify({"id": new_option.id, "text": new_option.text, "category": getattr(new_option, 'category', None)}), 201
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
     options = Model.query.all()
     if option_type == 'flavors':
         return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
@@ -167,15 +166,15 @@ def manage_options(option_type):
 @app.route('/api/options/<option_type>/<int:option_id>', methods=['DELETE'])
 @password_protected
 def delete_option(option_type, option_id):
-<<<<<<< HEAD
+
     MODELS = {'flavors': FlavorOption, 'atmospheres': AtmosphereOption}
     Model = MODELS.get(option_type)
     if not Model: return jsonify({"error": "Type d'option invalide"}), 404
     
-=======
+
     """Supprimer une option par son type et son ID."""
     Model = FlavorOption if option_type == 'flavors' else AtmosphereOption
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
     option = db.session.get(Model, option_id)
     if not option: return jsonify({"error": "Option non trouvée."}), 404
     db.session.delete(option)
@@ -184,7 +183,7 @@ def delete_option(option_type, option_id):
 
 
 # --- ROUTES API PUBLIQUES POUR LES PAGES D'AVIS ---
-<<<<<<< HEAD
+
 # Note: Ces routes sont maintenant gérées par les routes de gestion ci-dessus,
 # mais avec une protection par mot de passe. Le frontend de gestion les utilise déjà.
 # Le frontend public app.html devra être adapté pour charger ces données, ce qui n'est pas le cas actuellement.
@@ -196,7 +195,7 @@ def generate_review():
     data = request.get_json()
     lang = data.get('lang', 'fr')
     tags = data.get('tags', [])
-=======
+
 # Ces routes sont accessibles sans mot de passe
 
 @app.route('/api/public/servers')
@@ -275,7 +274,6 @@ def generate_review():
     except Exception as e:
         print(f"Erreur OpenAI: {e}")
         return jsonify({"error": "Erreur lors de la génération de l'avis."}), 500
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
 
     # Extraire les informations pour l'enregistrement et le prompt
     details = {}
@@ -318,7 +316,6 @@ def generate_review():
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
-<<<<<<< HEAD
     """Compte le nombre d'avis générés pour chaque serveur."""
     try:
         results = db.session.query(
@@ -332,31 +329,17 @@ def dashboard_data():
     except Exception as e:
         print(f"Erreur du dashboard: {e}")
         return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
-=======
-    """Fournit les données pour le tableau de bord."""
-    try:
-        server_counts = db.session.query(
-            GeneratedReview.server_name, 
-            func.count(GeneratedReview.server_name).label('review_count')
-        ).group_by(GeneratedReview.server_name).order_by(
-            func.count(GeneratedReview.server_name).desc()
-        ).all()
-        results = [{"server": name, "count": count} for name, count in server_counts]
-        return jsonify(results)
-    except Exception as e:
-        return jsonify({"error": f"Erreur de récupération des données : {e}"}), 500
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
 
 # --- POINT D'ENTRÉE POUR RENDER ---
 if __name__ == '__main__':
     with app.app_context():
-<<<<<<< HEAD
+
         db.create_all()
     # Le port est géré par gunicorn sur Render, debug=False en production
     app.run(debug=False)
-=======
+
         # Crée les tables si elles n'existent pas
         db.create_all() 
     # Lance le serveur de développement
     app.run(host='0.0.0.0', port=5000, debug=True)
->>>>>>> 5bfdb6ae07c7dca131e659653dd344bd692a0702
+
