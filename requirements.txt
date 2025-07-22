@@ -6,8 +6,3 @@ Flask-SQLAlchemy
 psycopg2-binary
 gunicorn
 SQLAlchemy
-Flask-Login
-Flask-Limiter
-Flask-Bcrypt
-Flask-Talisman
-Flask-WTF
