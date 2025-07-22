@@ -331,19 +331,4 @@ def menu_performance_data():
         results = query.group_by(
             MenuSelection.dish_name,
             MenuSelection.dish_category
-        ).order_by(
-            func.count(MenuSelection.id).desc()
-        ).all()
-        data = [{
-            "dish_name": name,
-            "dish_category": category,
-            "selection_count": count
-        } for name, category, count in results]
-        return jsonify(data)
-    except Exception as e:
-        print(f"Erreur performance menu: {e}")
-        return jsonify({"error": "Impossible de charger les données de performance."}), 500
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+        ).orde

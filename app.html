@@ -9,7 +9,7 @@
         :root{--brand-color:#BF5B3F;--background-color:#FDFBF5;--surface-color:#FFFFFF;--text-primary:#2C2C2C;--text-secondary:#737373;--border-color:#EAE0D5;--font-serif:'Cormorant Garamond',serif;--font-sans:'Montserrat',sans-serif;}
         @keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
         @keyframes fadeOut{from{opacity:1}to{opacity:0}}
-        body{font-family:var(--font-sans);background-color:var(--background-color);color:var(--text-primary);margin:0;padding:20px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+        body{font-family:var(--font-sans);background-color:var(--background-color);color:var(--text-primary);margin:0;padding:20px;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;box-sizing: border-box;}
         .review-container{background-color:var(--surface-color);border-radius:16px;padding:28px 32px;box-shadow:0 10px 50px -10px rgba(133,93,67,.2);width:100%;max-width:520px;text-align:center;box-sizing:border-box;border:1px solid var(--border-color);animation:fadeIn .8s ease-out; margin: 20px 0;}
         .logo-container { margin-bottom: 10px; }
         .logo-container img{width:180px;height:auto;}
@@ -66,7 +66,8 @@
         
         /* AMÉLIORATION RESPONSIVE */
         @media (max-width: 600px) {
-            .review-container { padding: 20px; margin: 10px 0; }
+            body { padding: 10px; }
+            .review-container { padding: 20px 15px; margin: 10px 0; }
             h1 { font-size: 1.9rem; }
             .tag-group { gap: 10px; }
             .tag-group label { padding: 8px 14px; font-size: 0.85rem; }
@@ -91,7 +92,7 @@
         <h1 data-translate-key="main_title"></h1>
         <p data-translate-key="subtitle"></p>
 
-        <p class="quick-review-prompt">
+        <p class="quick-review-prompt" id="quick-review-prompt-container">
             <a id="quick-review-toggle" data-translate-key="quick_review_prompt"></a>
         </p>
 
@@ -323,6 +324,7 @@
             const privateFeedbackContainer = document.getElementById('private-feedback-container');
             const generateBtn = document.getElementById('generate-btn');
             const quickReviewToggle = document.getElementById('quick-review-toggle');
+            const quickReviewPromptContainer = document.getElementById('quick-review-prompt-container');
             const detailedReviewSection = document.getElementById('detailed-review-section');
             const quickReviewSection = document.getElementById('quick-review-section');
             const copyBtn = document.getElementById('copy-btn');
@@ -420,7 +422,7 @@
                         { key: 'atmosphere_energy', value: 'Énergie Festive' },
                         { key: 'atmosphere_lighting', value: 'Éclairage Intime' },
                         { key: 'atmosphere_comfort', value: 'Confort' },
-                        { key: 'atmosphere_photo', value: 'Idéal pour photos' }
+                        { key: 'atmosphere_photo', value: 'Idéal pour les photos' }
                     ];
                     atmospheresContainer.innerHTML = atmosphereOptions.map((opt, i) => `<input type="checkbox" id="atm_${i}" value="${opt.value}"><label for="atm_${i}" data-translate-key="${opt.key}">${translations[currentLang][opt.key]}</label>`).join('');
 
@@ -434,6 +436,7 @@
                 e.preventDefault();
                 generateBtn.disabled = true;
                 reviewForm.classList.add('hidden');
+                quickReviewPromptContainer.classList.add('hidden'); // Cacher le message
                 loaderContainer.classList.remove('hidden');
                 resultArea.classList.add('hidden');
                 thankYouMessage.classList.add('hidden');
@@ -457,7 +460,7 @@
                 const private_feedback = toggleFeedbackCheckbox.checked ? document.getElementById('private-feedback-text').value : '';
                 if (tags.length === 0 && !private_feedback) {
                     showNotification(translations[currentLang].alert_no_option);
-                    cleanupAfterSubmit();
+                    cleanupAfterSubmit(true); // Passer true en cas d'erreur
                     return;
                 }
 
@@ -477,6 +480,7 @@
                     } else if (data.message) {
                         showNotification(data.message);
                         reviewForm.classList.remove('hidden');
+                        quickReviewPromptContainer.classList.remove('hidden');
                     } else {
                         throw new Error(data.error || 'Unknown error');
                     }
@@ -484,15 +488,20 @@
                     console.error('Error generating review:', error);
                     showNotification(error.message);
                     reviewForm.classList.remove('hidden');
+                    quickReviewPromptContainer.classList.remove('hidden');
                 } finally {
                     cleanupAfterSubmit();
                 }
             });
 
-            function cleanupAfterSubmit() {
+            function cleanupAfterSubmit(error = false) {
                 clearInterval(loadingInterval);
                 loaderContainer.classList.add('hidden');
                 generateBtn.disabled = false;
+                if (error) {
+                    reviewForm.classList.remove('hidden');
+                    quickReviewPromptContainer.classList.remove('hidden');
+                }
             }
 
             copyBtn.addEventListener('click', () => {

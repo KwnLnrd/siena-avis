@@ -54,6 +54,13 @@
         th { font-weight: 600; cursor: pointer; }
         th:hover { color: var(--brand-color); }
 
+        /* --- NOUVEAU: Conteneur pour les graphiques --- */
+        .chart-container {
+            position: relative;
+            height: 350px;
+            width: 100%;
+        }
+
         /* --- Feedback --- */
         .feedback-list { display: grid; gap: 20px; }
         .feedback-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-left-width: 5px; border-radius: 8px; padding: 20px; }
@@ -136,14 +143,18 @@
                 <div class="dashboard-grid">
                     <div class="card">
                         <h2 class="card-title">Classement des Avis</h2>
-                        <table id="ranking-table">
-                            <thead><tr><th>#</th><th>Serveur</th><th style="text-align:right;">Avis</th></tr></thead>
-                            <tbody><tr><td colspan="3">Chargement...</td></tr></tbody>
-                        </table>
+                        <div style="overflow-x: auto;">
+                            <table id="ranking-table">
+                                <thead><tr><th>#</th><th>Serveur</th><th style="text-align:right;">Avis</th></tr></thead>
+                                <tbody><tr><td colspan="3">Chargement...</td></tr></tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="card">
                         <h2 class="card-title">Top 3 des Serveurs</h2>
-                        <canvas id="top3-chart"></canvas>
+                        <div class="chart-container">
+                            <canvas id="top3-chart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -167,7 +178,9 @@
                     <div class="dashboard-grid">
                         <div class="card">
                             <h2 class="card-title">Top 10 des Plats</h2>
-                            <canvas id="top-10-chart"></canvas>
+                            <div class="chart-container">
+                                <canvas id="top-10-chart"></canvas>
+                            </div>
                         </div>
                         <div class="card">
                             <h2 class="card-title">Données Complètes</h2>
