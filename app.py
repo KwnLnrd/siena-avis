@@ -414,9 +414,10 @@ def get_internal_feedback():
             Server.name
         ).outerjoin(
             Server, InternalFeedback.associated_server_id == Server.id
-        ).filter(
-            InternalFeedback.status == status_filter
         )
+
+        if status_filter != 'all':
+            query = query.filter(InternalFeedback.status == status_filter)
 
         if search_term:
             query = query.filter(InternalFeedback.feedback_text.ilike(f'%{search_term}%'))
