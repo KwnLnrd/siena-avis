@@ -181,15 +181,32 @@
                         </div>
                     </div>
                     <div class="dashboard-grid">
+                        <!-- Card 1: Top 10 Plats (Bar Chart) -->
                         <div class="card">
                             <h2 class="card-title">Top 10 des Plats</h2>
                             <div class="chart-container">
                                 <canvas id="top-10-chart"></canvas>
                             </div>
                         </div>
+
+                        <!-- Card 2: Performance par Catégorie (Pie Chart) - NOUVEAU -->
+                        <div class="card">
+                            <h2 class="card-title">Performance par Catégorie</h2>
+                            <div class="chart-container">
+                                <canvas id="category-pie-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Les Flops (Table) - NOUVEAU -->
+                        <div class="card">
+                            <h2 class="card-title">Les 10 Plats les Moins Populaires</h2>
+                            <div id="flops-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
+                        </div>
+
+                        <!-- Card 4: Données Complètes (Table) -->
                         <div class="card">
                             <h2 class="card-title">Données Complètes</h2>
-                            <div id="full-data-table-container" style="overflow-x: auto;"><p>Chargement...</p></div>
+                            <div id="full-data-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
                         </div>
                     </div>
                 </div>
@@ -252,7 +269,7 @@
         const API_BASE_URL = 'https://siena-avis.onrender.com';
         let currentPassword = '';
         let dataCache = {};
-        let charts = {};
+        let charts = { top3: null, top10: null, categoryPie: null }; // Initialisation de l'objet charts
 
         const passwordModal = document.getElementById('password-modal');
         const passwordForm = document.getElementById('password-form');
@@ -373,13 +390,43 @@
 
         function renderPerformance() {
             let filteredData = categoryFilter.value === 'all' ? performanceState.allData : performanceState.allData.filter(item => item.dish_category === categoryFilter.value);
+            
+            // Destruction des anciens graphiques
             if (charts.top10) charts.top10.destroy();
+            if (charts.categoryPie) charts.categoryPie.destroy();
+
+            // --- GRAPHIQUE TOP 10 (Existant) ---
             const top10Data = [...filteredData].sort((a, b) => b.selection_count - a.selection_count).slice(0, 10);
             charts.top10 = new Chart(document.getElementById('top-10-chart'), {
                 type: 'bar',
                 data: { labels: top10Data.map(d => d.dish_name), datasets: [{ label: 'Sélections', data: top10Data.map(d => d.selection_count), backgroundColor: 'rgba(191, 91, 63, 0.8)' }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
+
+            // --- NOUVEAU: GRAPHIQUE CAMEMBERT PAR CATÉGORIE ---
+            const categoryCounts = filteredData.reduce((acc, item) => {
+                acc[item.dish_category] = (acc[item.dish_category] || 0) + item.selection_count;
+                return acc;
+            }, {});
+            const pieChartColors = ['#BF5B3F', '#E7A977', '#FADCA5', '#A68A64', '#665A48', '#9E6B55', '#D4A373'];
+            charts.categoryPie = new Chart(document.getElementById('category-pie-chart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(categoryCounts),
+                    datasets: [{
+                        data: Object.values(categoryCounts),
+                        backgroundColor: pieChartColors,
+                        borderColor: 'var(--surface-color)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 15 } } }
+                }
+            });
+
+            // --- TABLEAU DES DONNÉES COMPLÈTES (Existant) ---
             const sortedData = [...filteredData].sort((a, b) => {
                 const aVal = a[performanceState.currentSort.column];
                 const bVal = b[performanceState.currentSort.column];
@@ -389,6 +436,17 @@
             let tableHTML = '<table><thead><tr><th data-sort="dish_name">Plat</th><th data-sort="dish_category">Catégorie</th><th data-sort="selection_count">Sélections</th></tr></thead><tbody>';
             tableHTML += sortedData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
             tableContainer.innerHTML = tableHTML + '</tbody></table>';
+
+            // --- NOUVEAU: TABLEAU DES FLOPS ---
+            const flopsTableContainer = document.getElementById('flops-table-container');
+            const flopsData = [...filteredData].sort((a, b) => a.selection_count - b.selection_count).slice(0, 10);
+            let flopsTableHTML = '<table><thead><tr><th>Plat</th><th>Catégorie</th><th>Sélections</th></tr></thead><tbody>';
+            if (flopsData.length > 0) {
+                flopsTableHTML += flopsData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
+            } else {
+                flopsTableHTML += '<tr><td colspan="3" style="text-align:center;">Données insuffisantes.</td></tr>';
+            }
+            flopsTableContainer.innerHTML = flopsTableHTML + '</tbody></table>';
         }
         
         periodFilter.addEventListener('change', loadMenuPerformanceData);
