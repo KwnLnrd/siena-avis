@@ -9,11 +9,37 @@ from sqlalchemy import func, text, desc
 from sqlalchemy.orm import aliased
 from datetime import datetime, timedelta
 from functools import wraps
+from werkzeug.security import check_password_hash, generate_password_hash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
 
 # --- CONFIGURATION INITIALE ---
 load_dotenv()
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+
+# --- SÉCURITÉ ADDITIONNELLE ---
+# 1. Hachage du mot de passe
+# Pour générer un hash de mot de passe, exécutez cette commande dans votre terminal :
+# python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('VOTRE_MOT_DE_PASSE_ICI'))"
+# Ensuite, définissez la variable d'environnement DASHBOARD_PASSWORD_HASH avec le hash obtenu.
+DASHBOARD_PASSWORD_HASH = os.getenv('DASHBOARD_PASSWORD_HASH')
+if not DASHBOARD_PASSWORD_HASH:
+    raise RuntimeError("DASHBOARD_PASSWORD_HASH n'est pas définie. Veuillez définir un mot de passe haché dans vos variables d'environnement.")
+
+# 2. Initialisation de Flask-Talisman pour les en-têtes de sécurité
+# Note: CSP (Content Security Policy) est désactivé par défaut pour ne pas bloquer les scripts inline et CDN.
+# Pour une sécurité maximale, configurez CSP de manière plus stricte.
+talisman = Talisman(app, content_security_policy=None)
+
+# 3. Initialisation de Flask-Limiter pour la protection contre le brute-force
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://" # ou une URL Redis en production
+)
 
 # --- CLIENT OPENAI ---
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -26,7 +52,6 @@ if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD', 'siena_secret_password')
 db = SQLAlchemy(app)
 
 # --- MODÈLES DE LA BASE DE DONNÉES ---
@@ -71,12 +96,13 @@ class QualitativeFeedback(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- SÉCURISATION ---
+# --- DÉCORATEUR DE SÉCURISATION (MIS À JOUR) ---
 def password_protected(f):
     @wraps(f)
+    @limiter.limit("10 per minute") # Limite les tentatives de connexion pour ce endpoint
     def decorated_function(*args, **kwargs):
         auth = request.authorization
-        if not auth or not (auth.username == 'admin' and auth.password == DASHBOARD_PASSWORD):
+        if not auth or not (auth.username == 'admin' and check_password_hash(DASHBOARD_PASSWORD_HASH, auth.password)):
             return 'Accès non autorisé.', 401, {'WWW-Authenticate': 'Basic realm="Login Requis"'}
         return f(*args, **kwargs)
     return decorated_function
