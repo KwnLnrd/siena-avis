@@ -248,20 +248,33 @@ def generate_review():
         print(f"Erreur OpenAI ou DB: {e}")
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ROUTES DU DASHBOARD ---
+# --- ROUTES DU DASHBOARD (MODIFIÉE) ---
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
     try:
-        results = db.session.query(
+        # 1. Obtenir le classement des serveurs (inchangé)
+        ranking_results = db.session.query(
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
         ).group_by(GeneratedReview.server_name).order_by(func.count(GeneratedReview.id).desc()).all()
-        data = [{"server": server, "count": count} for server, count in results]
-        return jsonify(data)
+        ranking_data = [{"server": server, "count": count} for server, count in ranking_results]
+
+        # 2. Obtenir l'historique de tous les avis
+        history_results = db.session.query(GeneratedReview.created_at).order_by(GeneratedReview.created_at.asc()).all()
+        history_data = [{"created_at": review.created_at.isoformat()} for review in history_results]
+
+        # 3. Combiner les résultats dans un seul objet JSON
+        final_data = {
+            "ranking": ranking_data,
+            "history": history_data
+        }
+        
+        return jsonify(final_data)
     except Exception as e:
         print(f"Erreur du dashboard: {e}")
         return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
+
 
 # --- ENDPOINTS DE GESTION DU FEEDBACK ---
 @app.route('/api/internal-feedback', methods=['GET'])
