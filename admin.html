@@ -270,7 +270,7 @@
                     <span class="nav-text">Feedback Interne</span>
                 </button>
                 <button class="nav-tab" data-tab="settings">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23-.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23-.09.49 0 .61.22l2-3.46c.12-.22-.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
                     <span class="nav-text">Paramètres</span>
                 </button>
             </nav>
@@ -439,7 +439,7 @@
             if (response.status === 401 || response.status === 422) { logout(); throw new Error("Session expirée."); }
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({error: `Erreur serveur (${response.status})`}));
-                throw new Error(errorData.error || `Erreur serveur (${response.status})`);
+                throw new Error(errorData.error || `Erreur: ${response.statusText} (${response.status})`);
             }
             const contentType = response.headers.get("content-type");
             return contentType?.includes("application/json") ? response.json() : response.text();
@@ -505,7 +505,12 @@
             tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
             tabContents.forEach(content => content.classList.toggle('hidden', content.id !== `${tabName}-tab`));
             pageTitleEl.textContent = pageTitles[tabName] || "Dashboard";
-            globalPeriodContainer.classList.toggle('hidden', ['settings', 'synthese-client', 'feedback-interne', 'performance-menu'].includes(tabName));
+            globalPeriodContainer.classList.toggle('hidden', ['settings', 'synthese-client', 'feedback-interne', 'performance-menu', 'sif'].includes(tabName));
+             if(tabName === 'sif') {
+                // For SIF tab, we might want a specific filter or hide the global one
+                // For now, let's keep the global one but you could have a dedicated one
+                globalPeriodContainer.classList.remove('hidden');
+            }
             loadDataForTab(tabName);
             if (window.innerWidth <= 992) {
                 document.getElementById('sidebar').classList.remove('open');
@@ -528,9 +533,15 @@
 
         async function loadOverviewData() {
             const period = globalPeriodSelect.value;
+            const errorMsg = `<span style="font-size: 1rem; color: var(--danger-color);">Erreur</span>`;
             try {
+                // Set loading state
+                document.getElementById('reviews-period-stat').textContent = '...';
+                document.getElementById('avg-reviews-stat').textContent = '...';
+                document.getElementById('unread-feedback-count').textContent = '...';
+
                 const [overview, serverStats, menuPerf, qualSynth, unreadFeedbacks] = await Promise.all([
-    fetchWithAuth(`${API_BASE_URL}/api/dashboard?period=${period}`),
+                    fetchWithAuth(`${API_BASE_URL}/dashboard?period=${period}`),
                     fetchWithAuth(`${API_BASE_URL}/api/server-stats?period=all`),
                     fetchWithAuth(`${API_BASE_URL}/api/menu-performance?period=all`),
                     fetchWithAuth(`${API_BASE_URL}/api/qualitative-synthesis`),
@@ -551,7 +562,16 @@
                 renderTopServiceQualityWidget(qualSynth.service_qualities.slice(0, 3));
                 renderLatestFeedbackWidget(unreadFeedbacks[0]);
 
-            } catch (error) { console.error("Erreur chargement Overview:", error); }
+            } catch (error) { 
+                console.error("Erreur chargement Overview:", error);
+                document.getElementById('reviews-period-stat').innerHTML = errorMsg;
+                document.getElementById('avg-reviews-stat').innerHTML = errorMsg;
+                document.getElementById('unread-feedback-count').innerHTML = errorMsg;
+                document.getElementById('top-servers-widget').innerHTML = `<p>${error.message}</p>`;
+                document.getElementById('top-dishes-widget').innerHTML = `<p>${error.message}</p>`;
+                document.getElementById('top-quality-widget').innerHTML = `<p>${error.message}</p>`;
+                document.getElementById('latest-feedback-widget').innerHTML = `<p>${error.message}</p>`;
+            }
         }
 
         function renderTopServersWidget(data) { const container = document.getElementById('top-servers-widget'); if (!data || data.length === 0) { container.innerHTML = '<p>Pas de données.</p>'; return; } container.innerHTML = `<ul>${data.map(s => `<li><div class="avatar-placeholder"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div><div class="item-info"><div class="item-name">${s.server}</div></div><span class="item-count">${s.count} avis</span></li>`).join('')}</ul>`; }
@@ -647,4 +667,158 @@
         function resetFlavorForm() { manage.flavors.form.reset(); manage.flavors.idInput.value = ''; manage.flavors.btn.textContent = 'Ajouter Plat'; manage.flavors.btn.classList.remove('edit-mode'); }
         manage.servers.form.addEventListener('submit', async (e) => { e.preventDefault(); const id = manage.servers.idInput.value; const name = manage.servers.nameInput.value.trim(); if (!name) return; const url = id ? `${API_BASE_URL}/api/servers/${id}` : `${API_BASE_URL}/api/servers`; const method = id ? 'PUT' : 'POST'; await fetchWithAuth(url, { method, body: { name } }); resetServerForm(); loadManagementData(); });
         manage.flavors.form.addEventListener('submit', async (e) => { e.preventDefault(); const id = manage.flavors.idInput.value; const text = manage.flavors.textInput.value.trim(); const category = manage.flavors.catInput.value; if (!text || !category) return; const url = id ? `${API_BASE_URL}/api/options/flavors/${id}` : `${API_BASE_URL}/api/options/flavors`; const method = id ? 'PUT' : 'POST'; await fetchWithAuth(url, { method, body: { text, category } }); resetFlavorForm(); loadManagementData(); });
-        document.getElementById('settings-tab').addEventListener('click', async (e) => { const target = e.target.closest('.action-btn'); if (!target) return; const { id, type } = target.dataset; if (target.classList.contains('delete-btn')) { const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/flavors/${id}`; if (confirm('Êtes-vous sûr ?')) { await fetchWithAuth(`${API_BASE_URL}${endpoint}`, { method: 'DELETE' }); loadManagementData(); } } else if (target.classList.contains('edit-btn')) { if (type === 'servers') { resetFlavorForm(); manage.servers.idInput.value = id; manage.servers.nameInput.value = target.dataset.name; manage.servers.btn.textContent = 'Enregistrer'; manage.servers.btn.classList.add('edit-mode'); manage.servers.nameInput.focus(); } else if (type === 'flavors') { resetServerForm(); manage.flavors.idInpu
+        document.getElementById('settings-tab').addEventListener('click', async (e) => { const target = e.target.closest('.action-btn'); if (!target) return; const { id, type } = target.dataset; if (target.classList.contains('delete-btn')) { const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/flavors/${id}`; if (confirm('Êtes-vous sûr ?')) { await fetchWithAuth(`${API_BASE_URL}${endpoint}`, { method: 'DELETE' }); loadManagementData(); } } else if (target.classList.contains('edit-btn')) { if (type === 'servers') { resetFlavorForm(); manage.servers.idInput.value = id; manage.servers.nameInput.value = target.dataset.name; manage.servers.btn.textContent = 'Enregistrer'; manage.servers.btn.classList.add('edit-mode'); manage.servers.nameInput.focus(); } else if (type === 'flavors') { resetServerForm(); manage.flavors.idInput.value = id; manage.flavors.textInput.value = target.dataset.text; manage.flavors.catInput.value = target.dataset.category; manage.flavors.btn.textContent = 'Enregistrer'; manage.flavors.btn.classList.add('edit-mode'); manage.flavors.textInput.focus(); } } });
+        const confirmResetModal = document.getElementById('confirm-reset-modal');
+        document.getElementById('reset-data-btn').addEventListener('click', () => confirmResetModal.classList.remove('hidden'));
+        document.getElementById('cancel-reset-btn').addEventListener('click', () => confirmResetModal.classList.add('hidden'));
+        document.getElementById('confirm-reset-btn').addEventListener('click', async () => { try { await fetchWithAuth(`${API_BASE_URL}/api/reset-data`, { method: 'POST' }); alert('Données réinitialisées.'); location.reload(); } catch (error) { alert(`Erreur: ${error.message}`); } finally { confirmResetModal.classList.add('hidden'); } });
+        document.getElementById('export-selected-btn').addEventListener('click', () => {
+            const date = new Date().toLocaleDateString('fr-CA'); let exportedCount = 0;
+            function downloadCSV(data, filename) { if (!data || data.length === 0) { alert("Aucune donnée à exporter pour " + filename.split('-')[0]); return; } const headers = Object.keys(data[0]); const csvRows = ['\uFEFF' + headers.join(','), ...data.map(row => headers.map(fieldName => { let field = row[fieldName] ?? ''; let fieldString = field.toString(); if (fieldString.includes('"')) fieldString = `"${fieldString.replace(/"/g, '""')}"`; if (fieldString.includes(',')) fieldString = `"${fieldString}"`; return fieldString; }).join(','))]; const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); const url = URL.createObjectURL(blob); link.setAttribute('href', url); link.setAttribute('download', filename); document.body.appendChild(link); link.click(); document.body.removeChild(link); exportedCount++;}
+            if (document.getElementById('export-check-ranking').checked) { const formattedData = dataForExport.serverRanking.map((item, index) => ({ '#': index + 1, 'Serveur': item.server, 'Avis': item.count })); downloadCSV(formattedData, `classement-serveurs-${date}.csv`); }
+            if (document.getElementById('export-check-performance').checked) { const formattedData = dataForExport.dishPerformance.map(item => ({ 'Plat': item.dish_name, 'Catégorie': item.dish_category, 'Sélections': item.selection_count })); downloadCSV(formattedData, `performance-plats-${date}.csv`); }
+            if (document.getElementById('export-check-feedback').checked) { const formattedData = dataForExport.allFeedbacks.map(fb => ({ 'ID': fb.id, 'Date': new Date(fb.created_at).toLocaleString('fr-FR'), 'Serveur': fb.server_name, 'Feedback': fb.feedback_text, 'Statut': fb.status })); downloadCSV(formattedData, `feedbacks-internes-${date}.csv`); }
+            if (exportedCount === 0) alert("Veuillez cocher au moins une case à exporter.");
+        });
+
+        // --- LOGIQUE DE LA PAGE SIF ---
+        function showLoader(cardId) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            const existingLoader = card.querySelector('.loader-overlay');
+            if (existingLoader) return;
+            const loader = document.createElement('div');
+            loader.className = 'loader-overlay';
+            loader.innerHTML = '<div class="loader"></div>';
+            card.appendChild(loader);
+        }
+
+        function hideLoader(cardId) {
+            const card = document.getElementById(cardId);
+            const loader = card?.querySelector('.loader-overlay');
+            if (loader) {
+                card.removeChild(loader);
+            }
+        }
+
+        async function loadSifData() {
+            const period = globalPeriodSelect.value;
+            const cardIds = ['sif-synthesis-card', 'sif-sentiment-card', 'sif-suggestions-card', 'sif-categories-card'];
+            cardIds.forEach(showLoader);
+
+            try {
+                const data = await fetchWithAuth(`${API_BASE_URL}/api/sif-synthesis?period=${period}`);
+                renderSifSynthesis(data.strengths, data.weaknesses);
+                renderSifSuggestions(data.suggestions);
+                renderSifSentimentChart(data.sentiment_trend);
+                renderSifCategoriesChart(data.categories);
+            } catch (error) {
+                console.error("Erreur chargement SIF:", error);
+                const errorHtml = `<p style="color: var(--danger-color);">Erreur: ${error.message}</p>`;
+                document.querySelector('#sif-strengths ul').innerHTML = `<li>${error.message}</li>`;
+                document.querySelector('#sif-weaknesses ul').innerHTML = '';
+                document.getElementById('sif-suggestions-list').innerHTML = errorHtml;
+                // Clear charts on error
+                if(charts.sifSentiment) charts.sifSentiment.destroy();
+                if(charts.sifCategories) charts.sifCategories.destroy();
+            } finally {
+                cardIds.forEach(hideLoader);
+            }
+        }
+
+        function renderSifSynthesis(strengths, weaknesses) {
+            const strengthsContainer = document.querySelector('#sif-strengths ul');
+            const weaknessesContainer = document.querySelector('#sif-weaknesses ul');
+            strengthsContainer.innerHTML = (strengths && strengths.length > 0) ? strengths.map(item => `<li>${item}</li>`).join('') : '<li>Aucune donnée.</li>';
+            weaknessesContainer.innerHTML = (weaknesses && weaknesses.length > 0) ? weaknesses.map(item => `<li>${item}</li>`).join('') : '<li>Aucune donnée.</li>';
+        }
+
+        function renderSifSuggestions(suggestions) {
+            const container = document.getElementById('sif-suggestions-list');
+            if (!suggestions || suggestions.length === 0) {
+                container.innerHTML = '<p>Aucune suggestion pour le moment.</p>';
+                return;
+            }
+            container.innerHTML = suggestions.map(item => `
+                <div class="suggestion-item">
+                    <div class="suggestion-category">${item.category}</div>
+                    <p>${item.suggestion}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderSifSentimentChart(trendData) {
+            const canvas = document.getElementById('sif-sentiment-chart');
+            const ctx = canvas.getContext('2d');
+            if (charts.sifSentiment) charts.sifSentiment.destroy();
+            
+            if (!trendData || trendData.length === 0) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<p>Pas de données de tendance.</p>';
+                container.appendChild(canvas); // keep canvas for next render
+                canvas.classList.add('hidden');
+                return;
+            }
+            canvas.classList.remove('hidden');
+
+            charts.sifSentiment = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendData.map(d => new Date(d.date).toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit'})),
+                    datasets: [{
+                        label: 'Sentiment',
+                        data: trendData.map(d => d.score),
+                        borderColor: 'var(--brand-color)',
+                        backgroundColor: 'var(--brand-color-light)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false, min: -100, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderSifCategoriesChart(categoryData) {
+            const canvas = document.getElementById('sif-categories-chart');
+            const ctx = canvas.getContext('2d');
+            if (charts.sifCategories) charts.sifCategories.destroy();
+
+            if (!categoryData || categoryData.length === 0) {
+                const container = canvas.parentElement;
+                container.innerHTML = '<p>Pas de données de catégories.</p>';
+                container.appendChild(canvas);
+                canvas.classList.add('hidden');
+                return;
+            }
+            canvas.classList.remove('hidden');
+
+            charts.sifCategories = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categoryData.map(c => c.name),
+                    datasets: [{
+                        label: 'Score de Satisfaction',
+                        data: categoryData.map(c => c.score),
+                        backgroundColor: ['rgba(191, 91, 63, 0.7)', 'rgba(231, 169, 119, 0.7)', 'rgba(166, 138, 100, 0.7)', 'rgba(102, 90, 72, 0.7)'],
+                        borderColor: ['#BF5B3F', '#E7A977', '#A68A64', '#665A48'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>
