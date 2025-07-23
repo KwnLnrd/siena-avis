@@ -326,11 +326,12 @@ def dashboard_data():
         return jsonify({"error": "Impossible de charger les données de la vue d'ensemble."}), 500
 
 
-# --- ENDPOINTS DE GESTION DU FEEDBACK ---
+# --- ENDPOINTS DE GESTION DU FEEDBACK (MODIFIÉ) ---
 @app.route('/api/internal-feedback', methods=['GET'])
 @password_protected
 def get_internal_feedback():
     status_filter = request.args.get('status', 'new')
+    search_term = request.args.get('search', None)
     try:
         query = db.session.query(
             InternalFeedback,
@@ -339,9 +340,15 @@ def get_internal_feedback():
             Server, InternalFeedback.associated_server_id == Server.id
         ).filter(
             InternalFeedback.status == status_filter
-        ).order_by(
+        )
+
+        if search_term:
+            query = query.filter(InternalFeedback.feedback_text.ilike(f'%{search_term}%'))
+
+        query = query.order_by(
             desc(InternalFeedback.created_at)
         )
+        
         results = query.all()
         feedbacks = []
         for feedback, server_name in results:

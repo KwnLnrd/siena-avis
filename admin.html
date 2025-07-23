@@ -57,6 +57,7 @@
         th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
         th { font-weight: 600; cursor: pointer; }
         th:hover { color: var(--brand-color); }
+        mark { background-color: #FADCA5; padding: 2px; border-radius: 3px; }
 
         .chart-container { position: relative; height: 350px; width: 100%; }
 
@@ -243,10 +244,15 @@
 
             <div id="feedback-tab" class="tab-content hidden">
                 <div class="card card-full">
-                    <div class="nav-tabs" id="feedback-status-tabs">
-                        <button class="nav-tab active" data-status="new">Nouveaux</button>
-                        <button class="nav-tab" data-status="read">Lus</button>
-                        <button class="nav-tab" data-status="archived">Archivés</button>
+                    <div class="feedback-filters" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+                        <div class="nav-tabs" id="feedback-status-tabs" style="margin-bottom: 0; border-bottom: none;">
+                            <button class="nav-tab active" data-status="new">Nouveaux</button>
+                            <button class="nav-tab" data-status="read">Lus</button>
+                            <button class="nav-tab" data-status="archived">Archivés</button>
+                        </div>
+                        <div class="search-container" style="flex-grow: 1; max-width: 400px;">
+                            <input type="search" id="feedback-search-input" placeholder="Rechercher un mot-clé..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        </div>
                     </div>
                     <div id="feedback-list" class="feedback-list">
                         <p>Chargement des feedbacks...</p>
@@ -369,14 +375,13 @@
         });
         
         function loadDataForTab(tabName) {
-            // Force reload for dynamic tabs, use cache for others
-            if (dataCache[tabName] && !['overview', 'stats-serveurs', 'manage'].includes(tabName)) return;
+            if (dataCache[tabName] && !['overview', 'stats-serveurs', 'manage', 'feedback'].includes(tabName)) return;
             
             switch(tabName) {
                 case 'overview': loadOverviewData(); break;
                 case 'stats-serveurs': loadServerStatsData(); break;
                 case 'performance': loadMenuPerformanceData(); break;
-                case 'feedback': loadInternalFeedbackData('new'); break;
+                case 'feedback': loadInternalFeedbackData('new', feedbackSearchInput.value.trim()); break;
                 case 'manage': loadManagementData(); break;
             }
         }
@@ -542,33 +547,59 @@
         const feedbackState = { currentStatus: 'new' };
         const feedbackTabsContainer = document.getElementById('feedback-status-tabs');
         const feedbackListContainer = document.getElementById('feedback-list');
+        const feedbackSearchInput = document.getElementById('feedback-search-input');
 
-        async function loadInternalFeedbackData(status) {
+        async function loadInternalFeedbackData(status, searchTerm = '') {
             feedbackState.currentStatus = status;
             feedbackListContainer.innerHTML = '<p>Chargement...</p>';
             feedbackTabsContainer.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+            
+            const url = new URL(`${API_BASE_URL}/api/internal-feedback`);
+            url.searchParams.append('status', status);
+            if (searchTerm) {
+                url.searchParams.append('search', searchTerm);
+            }
+
             try {
-                const feedbacks = await fetchWithAuth(`${API_BASE_URL}/api/internal-feedback?status=${status}`);
-                dataCache.feedback = true;
-                feedbackListContainer.innerHTML = feedbacks.length === 0 ? '<p>Aucun feedback dans cette catégorie.</p>' : feedbacks.map(fb => {
-                    const formattedDate = new Date(fb.created_at).toLocaleString('fr-FR');
-                    let actionsHTML = '';
-                    if (fb.status === 'new') actionsHTML = `<button data-action="read">Marquer lu</button>`;
-                    if (fb.status === 'read') actionsHTML = `<button data-action="archive">Archiver</button>`;
-                    if (fb.status === 'archived') actionsHTML = `<button data-action="new">Réactiver</button>`;
-                    return `<div class="feedback-card" data-id="${fb.id}" data-status="${fb.status}">
-                                <div class="feedback-header"><span>Serveur: <strong>${fb.server_name}</strong></span><span>${formattedDate}</span></div>
-                                <p>${fb.feedback_text}</p>
-                                <div class="feedback-actions">${actionsHTML}</div>
-                            </div>`;
-                }).join('');
+                const feedbacks = await fetchWithAuth(url.toString());
+                let html = feedbacks.length === 0 
+                    ? '<p>Aucun feedback ne correspond à votre recherche.</p>' 
+                    : feedbacks.map(fb => {
+                        const formattedDate = new Date(fb.created_at).toLocaleString('fr-FR');
+                        let actionsHTML = '';
+                        if (fb.status === 'new') actionsHTML = `<button data-action="read">Marquer lu</button>`;
+                        if (fb.status === 'read') actionsHTML = `<button data-action="archive">Archiver</button>`;
+                        if (fb.status === 'archived') actionsHTML = `<button data-action="new">Réactiver</button>`;
+                        
+                        let feedbackText = fb.feedback_text;
+                        if (searchTerm) {
+                            const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+                            feedbackText = feedbackText.replace(regex, '<mark>$1</mark>');
+                        }
+
+                        return `<div class="feedback-card" data-id="${fb.id}" data-status="${fb.status}">
+                                    <div class="feedback-header"><span>Serveur: <strong>${fb.server_name}</strong></span><span>${formattedDate}</span></div>
+                                    <p>${feedbackText}</p>
+                                    <div class="feedback-actions">${actionsHTML}</div>
+                                </div>`;
+                    }).join('');
+                feedbackListContainer.innerHTML = html;
             } catch (error) {
                 console.error("Erreur chargement Feedback:", error);
                 feedbackListContainer.innerHTML = `<p>${error.message}</p>`;
             }
         }
 
-        feedbackTabsContainer.addEventListener('click', (e) => e.target.dataset.status && loadInternalFeedbackData(e.target.dataset.status));
+        feedbackSearchInput.addEventListener('input', () => {
+            loadInternalFeedbackData(feedbackState.currentStatus, feedbackSearchInput.value.trim());
+        });
+
+        feedbackTabsContainer.addEventListener('click', (e) => {
+            if (e.target.dataset.status) {
+                loadInternalFeedbackData(e.target.dataset.status, feedbackSearchInput.value.trim());
+            }
+        });
+
         feedbackListContainer.addEventListener('click', async (e) => {
             if (e.target.dataset.action) {
                 const card = e.target.closest('.feedback-card');
@@ -577,7 +608,7 @@
                 const newStatus = { read: 'read', archive: 'archived', new: 'new' }[action];
                 try {
                     await fetchWithAuth(`${API_BASE_URL}/api/internal-feedback/${id}/status`, { method: 'PUT', body: { status: newStatus } });
-                    loadInternalFeedbackData(feedbackState.currentStatus);
+                    loadInternalFeedbackData(feedbackState.currentStatus, feedbackSearchInput.value.trim());
                 } catch (error) { alert(`Erreur: ${error.message}`); }
             }
         });
