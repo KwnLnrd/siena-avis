@@ -1,4 +1,6 @@
 import os
+import json
+import random
 import traceback
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -101,18 +103,10 @@ with app.app_context():
 @app.route("/api/login", methods=["POST"])
 @limiter.limit("10 per minute") # Limite les tentatives de connexion
 def login():
-    """
-    Reçoit le nom d'utilisateur et le mot de passe.
-    Si les identifiants sont corrects, renvoie un token d'accès JWT.
-    """
     username = request.json.get("username", None)
     password = request.json.get("password", None)
-
-    # Vérification des identifiants (simple pour cet exemple)
     if username != "admin" or password != DASHBOARD_PASSWORD:
         return jsonify({"msg": "Bad username or password"}), 401
-
-    # Création du token d'accès
     access_token = create_access_token(identity=username)
     return jsonify(access_token=access_token)
 
@@ -137,7 +131,6 @@ def handle_server(server_id):
     server = db.session.get(Server, server_id)
     if not server:
         return jsonify({"error": "Serveur non trouvé."}), 404
-
     if request.method == 'PUT':
         data = request.get_json()
         if not data or not data.get('name'):
@@ -145,13 +138,11 @@ def handle_server(server_id):
         server.name = data['name'].strip().title()
         db.session.commit()
         return jsonify({"id": server.id, "name": server.name})
-
     if request.method == 'DELETE':
         GeneratedReview.query.filter_by(server_name=server.name).delete()
         db.session.delete(server)
         db.session.commit()
         return jsonify({"success": True})
-
 
 @app.route('/api/options/flavors', methods=['GET', 'POST'])
 @jwt_required()
@@ -167,14 +158,12 @@ def manage_flavors():
     options = FlavorOption.query.all()
     return jsonify([{"id": opt.id, "text": opt.text, "category": opt.category} for opt in options])
 
-
 @app.route('/api/options/flavors/<int:option_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def handle_flavor(option_id):
     option = db.session.get(FlavorOption, option_id)
     if not option:
         return jsonify({"error": "Option non trouvée."}), 404
-
     if request.method == 'PUT':
         data = request.get_json()
         if not data or not data.get('text') or not data.get('category'):
@@ -183,12 +172,10 @@ def handle_flavor(option_id):
         option.category = data['category'].strip()
         db.session.commit()
         return jsonify({"id": option.id, "text": option.text, "category": option.category})
-
     if request.method == 'DELETE':
         db.session.delete(option)
         db.session.commit()
         return jsonify({"success": True})
-
 
 # --- ROUTES API PUBLIQUES (inchangées) ---
 @app.route('/api/public/data', methods=['GET'])
@@ -325,7 +312,8 @@ def server_stats():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les statistiques des serveurs."}), 500
 
-@app.route('/dashboard')
+# MODIFIÉ: Route déplacée sous /api/
+@app.route('/api/dashboard')
 @jwt_required()
 def dashboard_data():
     period = request.args.get('period', 'all')
@@ -487,51 +475,46 @@ def update_feedback_status(feedback_id):
         print(f"Erreur de mise à jour du statut du feedback: {e}")
         return jsonify({"error": "Erreur lors de la mise à jour du statut."}), 500
 
-@app.route('/api/menu-performance')
+# AJOUT: Nouvelle route pour la synthèse intelligente (SIF)
+@app.route('/api/sif-synthesis')
 @jwt_required()
-def menu_performance_data():
-    period = request.args.get('period', 'all')
+def sif_synthesis():
+    period = request.args.get('period', '7days')
     try:
-        query = db.session.query(
-            MenuSelection.dish_name,
-            MenuSelection.dish_category,
-            func.count(MenuSelection.id).label('selection_count')
-        )
+        base_query = InternalFeedback.query
+        today = datetime.utcnow().date()
         if period == '7days':
-            query = query.filter(MenuSelection.selection_timestamp >= (datetime.utcnow() - timedelta(days=7)))
+            base_query = base_query.filter(InternalFeedback.created_at >= (datetime.utcnow() - timedelta(days=7)))
         elif period == '30days':
-            query = query.filter(MenuSelection.selection_timestamp >= (datetime.utcnow() - timedelta(days=30)))
+            base_query = base_query.filter(InternalFeedback.created_at >= (datetime.utcnow() - timedelta(days=30)))
         
-        results = query.group_by(
-            MenuSelection.dish_name,
-            MenuSelection.dish_category
-        ).order_by(
-            desc('selection_count')
-        ).all()
+        feedbacks = base_query.order_by(InternalFeedback.created_at).all()
 
-        data = [{
-            "dish_name": name,
-            "dish_category": category,
-            "selection_count": count
-        } for name, category, count in results]
-        return jsonify(data)
-    except Exception as e:
-        print(f"Erreur performance menu: {e}")
-        traceback.print_exc()
-        return jsonify({"error": "Impossible de charger les données de performance."}), 500
+        if not feedbacks:
+            return jsonify({
+                "strengths": [], "weaknesses": [], "suggestions": [], "sentiment_trend": [], "categories": {}
+            })
 
-@app.route('/api/reset-data', methods=['POST'])
-@jwt_required()
-def reset_data():
-    try:
-        db.session.execute(text('TRUNCATE TABLE generated_review, menu_selections, internal_feedback, qualitative_feedback RESTART IDENTITY CASCADE;'))
-        db.session.commit()
-        return jsonify({"success": True, "message": "Toutes les données de performance et d'avis ont été réinitialisées."})
-    except Exception as e:
-        db.session.rollback()
-        print(f"Erreur lors de la réinitialisation des données: {e}")
-        traceback.print_exc()
-        return jsonify({"error": "Une erreur est survenue lors de la réinitialisation."}), 500
+        feedback_texts = [f"- Le {fb.created_at.strftime('%Y-%m-%d')}: {fb.feedback_text}" for fb in feedbacks]
+        all_feedback_string = "\n".join(feedback_texts)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        prompt = f"""
+        Tu es un analyste expert pour le restaurant italien Siena. Analyse les feedbacks internes suivants.
+
+        Feedbacks:
+        {all_feedback_string}
+
+        Ta mission est de fournir une synthèse en JSON. Le JSON doit avoir les clés suivantes :
+        1. "strengths": une liste de 3-5 points forts (chaînes courtes).
+        2. "weaknesses": une liste de 3-5 points faibles (chaînes courtes).
+        3. "suggestions": une liste de 2-4 suggestions actionnables (objets avec clés "category" et "suggestion").
+        4. "categories": un objet où chaque clé est une catégorie de feedback (ex: "Service", "Cuisine") et la valeur est le nombre de mentions.
+
+        Sois concis et regroupe les thèmes. Ne réponds que par l'objet JSON valide.
+        """
+
+        completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "Tu es un analyste de données pour un restaurant, et tu retournes uniquement des réponses au format JSON."},
+                {"role": "us
