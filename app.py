@@ -60,6 +60,13 @@ class InternalFeedback(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
     server = db.relationship('Server')
 
+class QualitativeFeedback(db.Model):
+    __tablename__ = 'qualitative_feedback'
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+
 # --- INITIALISATION DE LA BASE DE DONNÉES ---
 with app.app_context():
     db.create_all()
@@ -186,16 +193,24 @@ def generate_review():
     details = {}
     dish_selections = []
     
+    # Enregistrement des données qualitatives
+    qualitative_categories = ['service_qualities', 'atmosphere', 'reason_for_visit', 'quick_highlight']
     for tag in tags:
-        if tag.get('category') and tag.get('value'):
-            if tag['category'] not in details:
-                details[tag['category']] = []
-            details[tag['category']].append(tag['value'])
+        category = tag.get('category')
+        value = tag.get('value')
+        if category in qualitative_categories and value:
+            new_qualitative_feedback = QualitativeFeedback(category=category, value=value)
+            db.session.add(new_qualitative_feedback)
+        
+        if category and value:
+            if category not in details:
+                details[category] = []
+            details[category].append(value)
             
-            if tag['category'] == 'dish':
-                flavor_option = FlavorOption.query.filter_by(text=tag['value']).first()
+            if category == 'dish':
+                flavor_option = FlavorOption.query.filter_by(text=value).first()
                 if flavor_option:
-                    dish_selections.append({ "name": tag['value'], "category": flavor_option.category })
+                    dish_selections.append({ "name": value, "category": flavor_option.category })
 
     server_name = details.get('server_name', [None])[0]
 
@@ -247,6 +262,7 @@ def generate_review():
     except Exception as e:
         db.session.rollback()
         print(f"Erreur OpenAI ou DB: {e}")
+        traceback.print_exc()
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
 # --- ROUTES DU DASHBOARD ---
@@ -347,6 +363,44 @@ def dashboard_data():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données de la vue d'ensemble."}), 500
 
+# NOUVELLE ROUTE POUR LA SYNTHÈSE QUALITATIVE
+@app.route('/api/qualitative-synthesis')
+@password_protected
+def qualitative_synthesis_data():
+    try:
+        service_qualities_query = db.session.query(
+            QualitativeFeedback.value,
+            func.count(QualitativeFeedback.id).label('count')
+        ).filter(
+            QualitativeFeedback.category == 'service_qualities'
+        ).group_by(
+            QualitativeFeedback.value
+        ).order_by(
+            desc('count')
+        ).all()
+
+        atmosphere_query = db.session.query(
+            QualitativeFeedback.value,
+            func.count(QualitativeFeedback.id).label('count')
+        ).filter(
+            QualitativeFeedback.category == 'atmosphere'
+        ).group_by(
+            QualitativeFeedback.value
+        ).order_by(
+            desc('count')
+        ).all()
+
+        service_qualities_data = [{"value": value, "count": count} for value, count in service_qualities_query]
+        atmosphere_data = [{"value": value, "count": count} for value, count in atmosphere_query]
+
+        return jsonify({
+            "service_qualities": service_qualities_data,
+            "atmosphere": atmosphere_data
+        })
+    except Exception as e:
+        print(f"Erreur synthèse qualitative: {e}")
+        traceback.print_exc()
+        return jsonify({"error": "Impossible de charger les données de synthèse qualitative."}), 500
 
 # --- ENDPOINTS DE GESTION DU FEEDBACK (MODIFIÉ) ---
 @app.route('/api/internal-feedback', methods=['GET'])
@@ -445,7 +499,7 @@ def menu_performance_data():
 def reset_data():
     try:
         # Utilise TRUNCATE pour vider les tables et réinitialiser les compteurs
-        db.session.execute(text('TRUNCATE TABLE generated_review, menu_selections, internal_feedback RESTART IDENTITY CASCADE;'))
+        db.session.execute(text('TRUNCATE TABLE generated_review, menu_selections, internal_feedback, qualitative_feedback RESTART IDENTITY CASCADE;'))
         db.session.commit()
         return jsonify({"success": True, "message": "Toutes les données de performance et d'avis ont été réinitialisées."})
     except Exception as e:
