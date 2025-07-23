@@ -54,8 +54,8 @@
         .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
         .card-header .card-title { margin-bottom: 0; }
         .card-title { font-family: var(--font-serif); font-size: 1.8rem; margin-top: 0; margin-bottom: 20px; color: var(--brand-color); }
-        .export-btn { background-color: var(--surface-color); color: var(--brand-color); border: 1px solid var(--brand-color); padding: 8px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; white-space: nowrap; }
-        .export-btn:hover { background-color: var(--brand-color); color: var(--surface-color); }
+        .export-btn { background-color: var(--brand-color); color: var(--surface-color); border: 1px solid var(--brand-color); padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; white-space: nowrap; }
+        .export-btn:hover { background-color: #A64B35; }
         
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
@@ -74,7 +74,7 @@
         .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; flex-wrap: wrap; gap: 10px;}
         .feedback-actions button { border: 1px solid var(--border-color); background-color: #fff; color: var(--text-primary); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; }
 
-        /* --- Gestion --- */
+        /* --- Gestion & Export --- */
         .item-list { list-style: none; padding: 0; margin: 0; }
         .item-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid var(--border-color); gap: 10px; }
         .item-list li span { flex-grow: 1; word-break: break-word; }
@@ -90,6 +90,8 @@
         .danger-zone { border: 2px solid var(--danger-color); margin-top: 30px; }
         .danger-zone .card-title { color: var(--danger-color); }
         .danger-zone button { background-color: var(--danger-color); }
+        .export-option input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand-color); }
+        .export-option label { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; cursor: pointer; }
 
         /* --- AMÉLIORATIONS RESPONSIVES --- */
         @media (max-width: 768px) {
@@ -147,6 +149,7 @@
             <button class="nav-tab" data-tab="performance">Performance Menu</button>
             <button class="nav-tab" data-tab="feedback">Feedback Interne</button>
             <button class="nav-tab" data-tab="manage">Gestion</button>
+            <button class="nav-tab" data-tab="export">Exporter</button>
         </nav>
 
         <div class="filters hidden" id="global-period-filter" style="display:flex; gap:20px; margin-bottom:20px; align-items: center;">
@@ -187,7 +190,6 @@
                     <div class="card">
                         <div class="card-header">
                             <h2 class="card-title">Classement des Avis</h2>
-                            <button id="export-ranking-btn" class="export-btn">Exporter CSV</button>
                         </div>
                         <div style="overflow-x: auto;">
                             <table id="ranking-table">
@@ -258,7 +260,6 @@
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">Données Complètes</h2>
-                                <button id="export-performance-btn" class="export-btn">Exporter CSV</button>
                             </div>
                             <div id="full-data-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
                         </div>
@@ -319,6 +320,31 @@
                     <button id="reset-data-btn">Réinitialiser les Données Reçues</button>
                 </div>
             </div>
+
+            <div id="export-tab" class="tab-content hidden">
+                <div class="card card-full">
+                    <h2 class="card-title">Exporter les Données</h2>
+                    <p>Sélectionnez les données à exporter. Chaque sélection sera téléchargée dans un fichier CSV séparé.</p>
+                    
+                    <div id="export-options" style="margin: 30px 0; display: flex; flex-direction: column; gap: 20px;">
+                        <label class="export-option">
+                            <input type="checkbox" id="export-check-ranking" value="ranking">
+                            Exporter le classement des serveurs
+                        </label>
+                        <label class="export-option">
+                            <input type="checkbox" id="export-check-performance" value="performance">
+                            Exporter la performance complète des plats
+                        </label>
+                        <label class="export-option">
+                            <input type="checkbox" id="export-check-feedback" value="feedback">
+                            Exporter tous les feedbacks internes
+                        </label>
+                    </div>
+        
+                    <button id="export-selected-btn" class="export-btn">Lancer l'Exportation</button>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -344,8 +370,10 @@
         const globalPeriodFilter = document.getElementById('global-period-filter');
         const globalPeriodSelect = document.getElementById('global-period-select');
 
-        const exportRankingBtn = document.getElementById('export-ranking-btn');
-        const exportPerformanceBtn = document.getElementById('export-performance-btn');
+        const exportSelectedBtn = document.getElementById('export-selected-btn');
+        const exportCheckRanking = document.getElementById('export-check-ranking');
+        const exportCheckPerformance = document.getElementById('export-check-performance');
+        const exportCheckFeedback = document.getElementById('export-check-feedback');
 
         const dataForExport = {
             serverRanking: [],
@@ -432,6 +460,7 @@
                 case 'performance': loadMenuPerformanceData(); break;
                 case 'feedback': loadInternalFeedbackData('new', feedbackSearchInput.value.trim()); break;
                 case 'manage': loadManagementData(); break;
+                case 'export': /* No data to load initially */ break;
             }
         }
 
@@ -837,7 +866,7 @@
             }
             const headers = Object.keys(data[0]);
             const csvRows = [
-                headers.join(','),
+                '\uFEFF' + headers.join(','), // Add BOM for UTF-8 Excel compatibility
                 ...data.map(row =>
                     headers.map(fieldName => {
                         let field = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];
@@ -845,7 +874,7 @@
                         if (fieldString.includes('"')) {
                             fieldString = fieldString.replace(/"/g, '""');
                         }
-                        if (fieldString.includes(',')) {
+                        if (fieldString.includes(',') || fieldString.includes('\n') || fieldString.includes('\r')) {
                             fieldString = `"${fieldString}"`;
                         }
                         return fieldString;
@@ -866,24 +895,55 @@
             }
         }
 
-        exportRankingBtn.addEventListener('click', () => {
-            const formattedData = dataForExport.serverRanking.map((item, index) => ({
-                '#': index + 1,
-                'Serveur': item.server,
-                'Avis': item.count
-            }));
+        exportSelectedBtn.addEventListener('click', async () => {
             const date = new Date().toLocaleDateString('fr-CA');
-            downloadCSV(formattedData, `classement-serveurs-${date}.csv`);
-        });
+            let exportedCount = 0;
 
-        exportPerformanceBtn.addEventListener('click', () => {
-            const formattedData = dataForExport.dishPerformance.map(item => ({
-                'Plat': item.dish_name,
-                'Catégorie': item.dish_category,
-                'Sélections': item.selection_count
-            }));
-            const date = new Date().toLocaleDateString('fr-CA');
-            downloadCSV(formattedData, `performance-plats-${date}.csv`);
+            if (exportCheckRanking.checked) {
+                const formattedData = dataForExport.serverRanking.map((item, index) => ({
+                    '#': index + 1,
+                    'Serveur': item.server,
+                    'Avis': item.count
+                }));
+                downloadCSV(formattedData, `classement-serveurs-${date}.csv`);
+                exportedCount++;
+            }
+
+            if (exportCheckPerformance.checked) {
+                const formattedData = dataForExport.dishPerformance.map(item => ({
+                    'Plat': item.dish_name,
+                    'Catégorie': item.dish_category,
+                    'Sélections': item.selection_count
+                }));
+                downloadCSV(formattedData, `performance-plats-${date}.csv`);
+                exportedCount++;
+            }
+
+            if (exportCheckFeedback.checked) {
+                try {
+                    exportSelectedBtn.disabled = true;
+                    exportSelectedBtn.textContent = 'Export en cours...';
+                    const allFeedbacks = await fetchWithAuth(`${API_BASE_URL}/api/internal-feedback?status=all`);
+                    const formattedData = allFeedbacks.map(fb => ({
+                        'ID': fb.id,
+                        'Date': new Date(fb.created_at).toLocaleString('fr-FR'),
+                        'Serveur': fb.server_name,
+                        'Feedback': fb.feedback_text,
+                        'Statut': fb.status
+                    }));
+                    downloadCSV(formattedData, `feedbacks-internes-${date}.csv`);
+                    exportedCount++;
+                } catch (error) {
+                    alert(`Erreur lors de l'export des feedbacks: ${error.message}`);
+                } finally {
+                    exportSelectedBtn.disabled = false;
+                    exportSelectedBtn.textContent = "Lancer l'Exportation";
+                }
+            }
+
+            if (exportedCount === 0) {
+                alert("Veuillez sélectionner au moins un type de données à exporter.");
+            }
         });
     });
     </script>
