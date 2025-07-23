@@ -3,29 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Unifié - Siena</title>
+    <title>Dashboard Siena - Refonte</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@400;500;600&display=swap');
-        :root {
-            --brand-color: #BF5B3F; --background-color: #FDFBF5; --surface-color: #FFFFFF;
-            --text-primary: #2C2C2C; --text-secondary: #737373; --border-color: #EAE0D5;
-            --font-serif: 'Cormorant Garamond', serif; --font-sans: 'Montserrat', sans-serif;
-            --danger-color: #D32F2F; --edit-color: #1976D2;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- DESIGN SYSTEM & STYLES GLOBAUX --- */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@400;500;600;700&display=swap');
         
-        /* --- Styles Généraux --- */
-        body {
-            font-family: var(--font-sans); background-color: var(--background-color); color: var(--text-primary);
-            margin: 0; padding: 20px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; box-sizing: border-box;
+        :root {
+            --brand-color: #BF5B3F;
+            --brand-color-light: rgba(191, 91, 63, 0.1);
+            --brand-color-dark: #A64B35;
+            --background-color: #F8F9FA; /* Légèrement plus neutre pour un look pro */
+            --surface-color: #FFFFFF;
+            --text-primary: #212529;
+            --text-secondary: #6C757D;
+            --border-color: #DEE2E6;
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Montserrat', sans-serif;
+            --danger-color: #D32F2F;
+            --danger-color-light: rgba(211, 47, 47, 0.1);
+            --edit-color: #1976D2;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.03);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
         }
-        .main-container { max-width: 1200px; margin: 0 auto; animation: fadeIn .8s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
         .hidden { display: none !important; }
 
-        /* --- Modal --- */
+        /* --- LAYOUT PRINCIPAL --- */
+        .main-layout {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--surface-color);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar .logo-link {
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+        .sidebar .logo-link img {
+            width: 150px;
+        }
+
+        .main-content-area {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 30px;
+            animation: fadeIn .6s ease-out;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .content-header h1 {
+            font-family: var(--font-serif);
+            font-size: 2.8rem;
+            margin: 0;
+        }
+        
+        /* --- NAVIGATION --- */
+        .nav-tabs {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .nav-tab:hover {
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+        .nav-tab.active {
+            background-color: var(--brand-color-light);
+            color: var(--brand-color);
+            font-weight: 600;
+        }
+        .nav-tab svg { width: 20px; height: 20px; }
+
+        /* --- MODALS --- */
         .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-color:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:1000;backdrop-filter:blur(5px); padding: 15px;}
-        .modal-content{background:var(--surface-color);padding:40px;border-radius:16px;box-shadow:0 10px 50px rgba(0,0,0,.2);text-align:center;width:100%;max-width:400px; box-sizing: border-box;}
+        .modal-content{background:var(--surface-color);padding:40px;border-radius:16px;box-shadow:var(--shadow-lg);text-align:center;width:100%;max-width:400px; box-sizing: border-box;}
         .modal-content h2{font-family:var(--font-serif);font-size:1.8rem;margin-top:0;margin-bottom:15px}
         .modal-content p{margin-bottom:25px;color:var(--text-secondary)}
         #password-form input{width:100%;padding:12px;border:1px solid var(--border-color);border-radius:8px;font-size:1rem;box-sizing:border-box;margin-bottom:15px}
@@ -37,77 +139,174 @@
         .modal-buttons .confirm-btn { background-color: var(--danger-color); color: white; border-color: var(--danger-color); }
         .modal-buttons .cancel-btn { background-color: var(--surface-color); color: var(--text-primary); }
 
-        /* --- Header et Navigation --- */
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; flex-wrap: wrap; gap: 15px;}
-        .header .logo-link img { width: 160px; }
-        .header h1 { font-family: var(--font-serif); font-size: 2.5rem; margin: 0; }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
-        .nav-tab { padding: 12px 22px; cursor: pointer; border: none; background: none; font-size: 1rem; font-weight: 500; color: var(--text-secondary); border-bottom: 3px solid transparent; transition: all 0.2s; text-align: center;}
-        .nav-tab:hover { color: var(--text-primary); }
-        .nav-tab.active { color: var(--brand-color); border-bottom-color: var(--brand-color); }
-
-        /* --- Contenu (styles inchangés) --- */
-        .tab-content { animation: fadeIn .5s ease-out; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
-        .card { background-color: var(--surface-color); padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px -5px rgba(133, 93, 67, .1); }
+        /* --- COMPOSANTS UI --- */
+        .card {
+            background-color: var(--surface-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+        }
         .card-full { grid-column: 1 / -1; }
         .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-        .card-header .card-title { margin-bottom: 0; }
-        .card-title { font-family: var(--font-serif); font-size: 1.8rem; margin-top: 0; margin-bottom: 20px; color: var(--brand-color); }
-        .export-btn { background-color: var(--brand-color); color: var(--surface-color); border: 1px solid var(--brand-color); padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; white-space: nowrap; }
-        .export-btn:hover { background-color: #A64B35; }
-        
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
-        th { font-weight: 600; cursor: pointer; }
-        th:hover { color: var(--brand-color); }
-        mark { background-color: #FADCA5; padding: 2px; border-radius: 3px; }
-
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 1.6rem;
+            margin: 0;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title svg { width: 22px; height: 22px; color: var(--brand-color); }
         .chart-container { position: relative; height: 350px; width: 100%; }
+        
+        /* --- FILTRES --- */
+        .filters { display:flex; gap:20px; align-items: center; }
+        .filters label { font-weight: 500; color: var(--text-secondary); margin-right: 8px; }
+        .filters select { padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--surface-color); font-size: 0.95rem; }
 
+        /* --- VUE D'ENSEMBLE --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .stat-card {
+            background-color: var(--surface-color);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+        .stat-card h3 {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .stat-value {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 10px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #unread-feedback-stat .stat-value { color: var(--brand-color); }
+        #unread-feedback-stat .notification-dot {
+            width: 12px; height: 12px; background-color: var(--brand-color); border-radius: 50%;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 30px;
+        }
+        .main-chart-card { grid-column: span 12; }
+        .widget-card { grid-column: span 4; }
+        .widget-card ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; }
+        .widget-card li { display: flex; align-items: center; gap: 12px; font-size: 0.95rem; }
+        .widget-card .avatar-placeholder { width: 40px; height: 40px; border-radius: 50%; background-color: var(--background-color); display: flex; justify-content: center; align-items: center; color: var(--text-secondary); }
+        .widget-card .item-info { flex-grow: 1; }
+        .widget-card .item-name { font-weight: 600; }
+        .widget-card .item-meta { font-size: 0.85rem; color: var(--text-secondary); }
+        .widget-card .item-count { font-weight: 600; font-size: 1.1rem; }
+        .widget-card .widget-link { display: block; margin-top: 20px; text-align: right; font-weight: 600; color: var(--brand-color); text-decoration: none; }
+        .widget-card .feedback-preview { background-color: var(--background-color); padding: 15px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .widget-card .feedback-preview:hover { background-color: #e9ecef; }
+        .widget-card .feedback-preview p { margin: 0; }
+
+        /* --- STATS SERVEURS --- */
+        .page-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 15px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        th { font-weight: 600; cursor: pointer; user-select: none; }
+        th:hover { color: var(--brand-color); }
+        td .trend-icon { font-size: 1.2rem; }
+        .trend-up { color: var(--success-color); }
+        .trend-down { color: var(--danger-color); }
+        .trend-stable { color: var(--text-secondary); }
+
+        /* --- PERFORMANCE MENU --- */
+        .performance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+        
+        /* --- FEEDBACK INTERNE --- */
+        .feedback-controls { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 25px; padding: 15px; background-color: var(--surface-color); border-radius: 12px; border: 1px solid var(--border-color); }
+        .feedback-status-tabs { display: flex; gap: 5px; background-color: var(--background-color); padding: 5px; border-radius: 8px; }
+        .feedback-status-tabs button { padding: 8px 18px; border-radius: 6px; border: none; font-weight: 500; cursor: pointer; background-color: transparent; color: var(--text-secondary); transition: all 0.2s; }
+        .feedback-status-tabs button.active { background-color: var(--surface-color); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+        .search-container input { width: 100%; min-width: 250px; padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); }
         .feedback-list { display: grid; gap: 20px; }
-        .feedback-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-left-width: 5px; border-radius: 8px; padding: 20px; }
-        .feedback-card[data-status="new"] { border-left-color: #1565C0; }
-        .feedback-card[data-status="read"] { border-left-color: #757575; }
-        .feedback-card[data-status="archived"] { border-left-color: #FFB74D; opacity: 0.8; }
+        .feedback-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-left-width: 5px;
+            border-radius: 8px;
+            padding: 20px;
+            transition: background-color 0.3s;
+        }
+        .feedback-card[data-status="new"] { border-left-color: var(--info-color); background-color: rgba(23, 162, 184, 0.05); }
+        .feedback-card[data-status="read"] { border-left-color: var(--text-secondary); }
+        .feedback-card[data-status="archived"] { border-left-color: var(--warning-color); background-color: rgba(255, 193, 7, 0.05); opacity: 0.9; }
         .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; flex-wrap: wrap; gap: 10px;}
         .feedback-actions button { border: 1px solid var(--border-color); background-color: #fff; color: var(--text-primary); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; }
+        mark { background-color: #FADCA5; padding: 2px; border-radius: 3px; }
 
+        /* --- PARAMETRES --- */
+        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 30px; }
         .item-list { list-style: none; padding: 0; margin: 0; }
-        .item-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid var(--border-color); gap: 10px; }
+        .item-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid var(--border-color); gap: 10px; }
+        .item-list li:last-child { border-bottom: none; }
         .item-list li span { flex-grow: 1; word-break: break-word; }
         .item-actions { display: flex; gap: 8px; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 5px; transition: transform 0.2s; }
         .action-btn:hover { transform: scale(1.2); }
         .delete-btn { color: var(--danger-color); }
         .edit-btn { color: var(--edit-color); }
-        .add-form { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .add-form input, .add-form select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
-        .add-form button { background-color: var(--brand-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .add-form { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        .add-form input, .add-form select { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        .add-form button { background-color: var(--brand-color); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; align-self: flex-end; }
         .add-form button.edit-mode { background-color: var(--edit-color); }
-        .danger-zone { border: 2px solid var(--danger-color); margin-top: 30px; }
+        .danger-zone { border: 2px solid var(--danger-color); background-color: var(--danger-color-light); }
         .danger-zone .card-title { color: var(--danger-color); }
-        .danger-zone button { background-color: var(--danger-color); }
-        .export-option input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand-color); }
+        .danger-zone button { background-color: var(--danger-color); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .export-option { display: block; margin-bottom: 15px; }
         .export-option label { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; cursor: pointer; }
+        .export-option input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand-color); }
+        .export-btn { background-color: var(--brand-color); color: var(--surface-color); border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
+        .export-btn:hover { background-color: var(--brand-color-dark); }
 
+        /* --- RESPONSIVE DESIGN --- */
+        @media (max-width: 1200px) {
+            .overview-grid .widget-card { grid-column: span 6; }
+        }
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); z-index: 2000; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content-area { margin-left: 0; width: 100%; }
+            .menu-toggle { display: block; position: fixed; top: 15px; left: 15px; z-index: 2001; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; cursor: pointer; }
+            .content-header h1 { font-size: 2.2rem; }
+            .performance-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 768px) {
-            body { padding: 10px; }
-            .header { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .header h1 { font-size: 2rem; }
-            .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
-            .card { padding: 20px; }
-            .nav-tab { padding: 10px 15px; font-size: 0.9rem; }
+            .main-content-area { padding: 20px; }
+            .stats-grid, .page-grid, .settings-grid { grid-template-columns: 1fr; }
+            .overview-grid .widget-card { grid-column: span 12; }
+            .content-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .filters { flex-direction: column; align-items: stretch; width: 100%; }
+            .feedback-controls { flex-direction: column; align-items: stretch; }
         }
         @media (max-width: 480px) {
             .modal-content { padding: 25px; }
-            .nav-tabs { justify-content: center; }
-            .nav-tab { flex-grow: 1; }
+            .sidebar { width: 100%; }
         }
     </style>
 </head>
 <body>
 
+    <!-- MODAL D'AUTHENTIFICATION -->
     <div id="password-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>Accès Sécurisé</h2>
@@ -120,6 +319,7 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIRMATION -->
     <div id="confirm-reset-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 style="color: var(--danger-color);">Êtes-vous sûr ?</h2>
@@ -131,119 +331,183 @@
         </div>
     </div>
 
-    <div class="main-container hidden" id="main-content">
-        <header class="header">
+    <!-- LAYOUT PRINCIPAL (caché jusqu'à l'authentification) -->
+    <div class="main-layout hidden" id="main-layout">
+        <!-- BARRE LATÉRALE DE NAVIGATION -->
+        <aside class="sidebar" id="sidebar">
             <a href="index.html" class="logo-link">
-                <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
+                <img src="https://uploads-ssl.webflow.com/62df337c9866311634563a30/62df359427510a2051e063a8_logosiena-1.png" alt="Logo Siena Paris">
             </a>
-            <h1>Tableau de Bord Siena</h1>
-        </header>
+            <nav class="nav-tabs">
+                <!-- Les icônes SVG sont intégrées pour la performance et la personnalisation -->
+                <button class="nav-tab active" data-tab="overview">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    Vue d'ensemble
+                </button>
+                <button class="nav-tab" data-tab="stats-serveurs">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                    Stats Serveurs
+                </button>
+                <button class="nav-tab" data-tab="performance-menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg>
+                    Performance Menu
+                </button>
+                <button class="nav-tab" data-tab="synthese-client">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+                    Synthèse Client
+                </button>
+                <button class="nav-tab" data-tab="feedback-interne">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39L6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12.5 8H11v6l4.75 2.85.75-1.23-4-2.37V8zM12 4c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/></svg>
+                    Feedback Interne
+                </button>
+                <button class="nav-tab" data-tab="settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                    Paramètres
+                </button>
+            </nav>
+        </aside>
 
-        <nav class="nav-tabs">
-            <button class="nav-tab active" data-tab="overview">Vue d'ensemble</button>
-            <button class="nav-tab" data-tab="stats-serveurs">Stats Serveurs</button>
-            <button class="nav-tab" data-tab="synthese-client">Synthèse Client</button>
-            <button class="nav-tab" data-tab="performance">Performance Menu</button>
-            <button class="nav-tab" data-tab="feedback">Feedback Interne</button>
-            <button class="nav-tab" data-tab="manage">Gestion</button>
-            <button class="nav-tab" data-tab="export">Exporter</button>
-        </nav>
-
-        <div class="filters hidden" id="global-period-filter" style="display:flex; gap:20px; margin-bottom:20px; align-items: center;">
-            <div>
-                <label for="global-period-select" style="font-weight: 500;">Période :</label>
-                <select id="global-period-select" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <option value="all">Tout</option>
-                    <option value="30days">30 derniers jours</option>
-                    <option value="7days">7 derniers jours</option>
-                </select>
-            </div>
-        </div>
-
-        <main>
-            <div id="overview-tab" class="tab-content">
-                <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
-                    <div class="stat-card" style="background-color: var(--surface-color); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px -5px rgba(133, 93, 67, .1);">
-                        <h3 id="reviews-period-title" style="font-family: var(--font-sans); font-size: 1rem; color: var(--text-secondary); margin-top: 0; font-weight: 500;">Avis (Total)</h3>
-                        <p id="reviews-period-stat" style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 700; color: var(--brand-color); margin: 10px 0 0;">...</p>
-                    </div>
-                    <div class="stat-card" style="background-color: var(--surface-color); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 20px -5px rgba(133, 93, 67, .1);">
-                        <h3 id="avg-reviews-title" style="font-family: var(--font-sans); font-size: 1rem; color: var(--text-secondary); margin-top: 0; font-weight: 500;">Moyenne / jour</h3>
-                        <p id="avg-reviews-stat" style="font-family: var(--font-serif); font-size: 2.5rem; font-weight: 700; color: var(--brand-color); margin: 10px 0 0;">...</p>
-                    </div>
+        <!-- ZONE DE CONTENU PRINCIPAL -->
+        <div class="main-content-area" id="main-content">
+            <button class="menu-toggle" id="menu-toggle" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+            </button>
+            
+            <!-- En-tête de la page (titre + filtres) -->
+            <header class="content-header">
+                <h1 id="page-title">Vue d'ensemble</h1>
+                <div class="filters" id="global-period-filter">
+                    <label for="global-period-select">Période :</label>
+                    <select id="global-period-select">
+                        <option value="all">Tout</option>
+                        <option value="30days">30 derniers jours</option>
+                        <option value="7days">7 derniers jours</option>
+                    </select>
                 </div>
-                <div class="dashboard-grid">
-                    <div class="card card-full">
-                        <h2 class="card-title">Tendance des Avis (14 derniers jours)</h2>
-                        <div class="chart-container">
-                            <canvas id="reviews-trend-chart"></canvas>
+            </header>
+
+            <main>
+                <!-- ONGLET: VUE D'ENSEMBLE -->
+                <div id="overview-tab" class="tab-content">
+                    <!-- Indicateurs clés -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="reviews-period-title">Avis (Total)</h3>
+                            <p id="reviews-period-stat" class="stat-value">...</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Moyenne / jour</h3>
+                            <p id="avg-reviews-stat" class="stat-value">...</p>
+                        </div>
+                        <div class="stat-card" id="unread-feedback-stat">
+                            <h3>Feedbacks non lus</h3>
+                            <p id="unread-feedback-count" class="stat-value">...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Grille principale de la vue d'ensemble -->
+                    <div class="overview-grid">
+                        <div class="card main-chart-card">
+                            <h2 class="card-title">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/></svg>
+                                Tendance des Avis (14 derniers jours)
+                            </h2>
+                            <div class="chart-container">
+                                <canvas id="reviews-trend-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- WIDGET: TOP 3 SERVEURS -->
+                        <div class="card widget-card">
+                            <h2 class="card-title">Top Serveurs</h2>
+                            <div id="top-servers-widget">
+                                <p>Chargement...</p>
+                            </div>
+                            <a href="#" id="link-to-servers" class="widget-link">Voir le classement complet &rarr;</a>
+                        </div>
+                        
+                        <!-- WIDGET: TOP 3 PLATS -->
+                        <div class="card widget-card">
+                            <h2 class="card-title">Top Plats</h2>
+                            <div id="top-dishes-widget">
+                                <p>Chargement...</p>
+                            </div>
+                            <a href="#" id="link-to-menu" class="widget-link">Voir les performances &rarr;</a>
+                        </div>
+                        
+                        <!-- WIDGET: QUALITÉ DE SERVICE -->
+                        <div class="card widget-card">
+                            <h2 class="card-title">Qualité de Service</h2>
+                            <div id="top-quality-widget">
+                                <p>Chargement...</p>
+                            </div>
+                            <a href="#" id="link-to-synthesis" class="widget-link">Voir la synthèse &rarr;</a>
+                        </div>
+
+                        <!-- WIDGET: DERNIER FEEDBACK -->
+                        <div class="card widget-card" style="grid-column: span 6;">
+                             <h2 class="card-title">Dernier Feedback Interne</h2>
+                             <div id="latest-feedback-widget">
+                                 <p>Chargement...</p>
+                             </div>
+                             <a href="#" id="link-to-feedback" class="widget-link">Voir tous les feedbacks &rarr;</a>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="stats-serveurs-tab" class="tab-content hidden">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <div class="card-header">
+                <!-- ONGLET: STATS SERVEURS -->
+                <div id="stats-serveurs-tab" class="tab-content hidden">
+                    <div class="page-grid">
+                        <div class="card">
                             <h2 class="card-title">Classement des Avis</h2>
+                            <div style="overflow-x: auto;">
+                                <table id="ranking-table">
+                                    <thead><tr><th>#</th><th>Serveur</th><th style="text-align:center;">Tendance</th><th style="text-align:right;">Avis</th></tr></thead>
+                                    <tbody><tr><td colspan="4">Chargement...</td></tr></tbody>
+                                </table>
+                            </div>
                         </div>
-                        <div style="overflow-x: auto;">
-                            <table id="ranking-table">
-                                <thead><tr><th>#</th><th>Serveur</th><th style="text-align:right;">Avis</th></tr></thead>
-                                <tbody><tr><td colspan="3">Chargement...</td></tr></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h2 class="card-title">Top 3 des Serveurs</h2>
-                        <div class="chart-container">
-                            <canvas id="top3-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="synthese-client-tab" class="tab-content hidden">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <h2 class="card-title">Qualités de Service les Plus Appréciées</h2>
-                        <div class="chart-container">
-                            <canvas id="service-qualities-chart"></canvas>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h2 class="card-title">Points Forts de l'Atmosphère</h2>
-                        <div class="chart-container">
-                            <canvas id="atmosphere-chart"></canvas>
+                        <div class="card">
+                            <h2 class="card-title">Répartition des avis par serveur</h2>
+                            <div class="chart-container" style="height: 400px;">
+                                <canvas id="server-distribution-chart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="performance-tab" class="tab-content hidden">
-                <div class="card card-full">
-                    <div class="filters" style="display:flex; gap:20px; margin-bottom:20px; flex-wrap: wrap;">
-                        <div>
-                            <label for="period-filter">Période :</label>
-                            <select id="period-filter">
+                <!-- ONGLET: PERFORMANCE MENU -->
+                <div id="performance-menu-tab" class="tab-content hidden">
+                    <!-- Filtres spécifiques à la page -->
+                    <div class="filters" style="margin-bottom: 30px;">
+                         <div>
+                            <label for="perf-period-filter">Période :</label>
+                            <select id="perf-period-filter">
                                 <option value="all">Tout</option>
                                 <option value="30days">30 derniers jours</option>
                                 <option value="7days">7 derniers jours</option>
                             </select>
                         </div>
                         <div>
-                            <label for="category-filter">Catégorie :</label>
-                            <select id="category-filter"><option value="all">Toutes</option></select>
+                            <label for="perf-category-filter">Catégorie :</label>
+                            <select id="perf-category-filter"><option value="all">Toutes</option></select>
                         </div>
                     </div>
-                    <div class="dashboard-grid">
+                    
+                    <div class="performance-grid">
                         <div class="card">
-                            <h2 class="card-title">Top 10 des Plats</h2>
-                            <div class="chart-container">
+                            <h2 class="card-title">🚀 Top 10 Plats</h2>
+                            <div class="chart-container" style="height: 400px;">
                                 <canvas id="top-10-chart"></canvas>
                             </div>
                         </div>
+                        <div class="card">
+                            <h2 class="card-title">📉 Flop 10 Plats</h2>
+                            <div id="flops-table-container" style="overflow-x: auto; max-height: 400px;"><p>Chargement...</p></div>
+                        </div>
+                    </div>
+
+                    <div class="page-grid">
                         <div class="card">
                             <h2 class="card-title">Performance par Catégorie</h2>
                             <div class="chart-container">
@@ -251,146 +515,160 @@
                             </div>
                         </div>
                         <div class="card">
-                            <h2 class="card-title">Les 10 Plats les Moins Populaires</h2>
-                            <div id="flops-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h2 class="card-title">Données Complètes</h2>
-                            </div>
+                            <h2 class="card-title">Données Complètes</h2>
                             <div id="full-data-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
                         </div>
                     </div>
                 </div>
-            </div>
+                
+                <!-- ONGLET: SYNTHESE CLIENT -->
+                <div id="synthese-client-tab" class="tab-content hidden">
+                    <div class="page-grid">
+                        <div class="card">
+                            <h2 class="card-title">Qualités de Service les Plus Appréciées</h2>
+                            <div class="chart-container">
+                                <canvas id="service-qualities-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h2 class="card-title">Points Forts de l'Atmosphère</h2>
+                            <div class="chart-container">
+                                <canvas id="atmosphere-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div id="feedback-tab" class="tab-content hidden">
-                <div class="card card-full">
-                    <div class="feedback-filters" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
-                        <div class="nav-tabs" id="feedback-status-tabs" style="margin-bottom: 0; border-bottom: none;">
+                <!-- ONGLET: FEEDBACK INTERNE -->
+                <div id="feedback-interne-tab" class="tab-content hidden">
+                    <div class="feedback-controls">
+                        <div id="feedback-status-tabs" class="feedback-status-tabs">
                             <button class="nav-tab active" data-status="new">Nouveaux</button>
                             <button class="nav-tab" data-status="read">Lus</button>
                             <button class="nav-tab" data-status="archived">Archivés</button>
                         </div>
-                        <div class="search-container" style="flex-grow: 1; max-width: 400px;">
-                            <input type="search" id="feedback-search-input" placeholder="Rechercher un mot-clé..." style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div class="search-container">
+                            <input type="search" id="feedback-search-input" placeholder="Rechercher un mot-clé...">
                         </div>
                     </div>
                     <div id="feedback-list" class="feedback-list">
                         <p>Chargement des feedbacks...</p>
                     </div>
                 </div>
-            </div>
 
-            <div id="manage-tab" class="tab-content hidden">
-                <div class="dashboard-grid">
-                    <div class="card" id="servers-section">
-                        <h2 class="card-title">Gérer les Serveurs</h2>
-                        <ul id="servers-list" class="item-list"></ul>
-                        <form id="add-server-form" class="add-form">
-                            <input type="hidden" id="editing-server-id">
-                            <input type="text" id="new-server-name" placeholder="Prénom du serveur" required>
-                            <button type="submit">Ajouter Serveur</button>
-                        </form>
-                    </div>
-                    <div class="card" id="flavors-section">
-                        <h2 class="card-title">Gérer les Plats (Saveurs)</h2>
-                        <ul id="flavors-list" class="item-list"></ul>
-                        <form id="add-flavor-form" class="add-form">
-                            <input type="hidden" id="editing-flavor-id">
-                            <input type="text" id="new-flavor-text" placeholder="Nom du plat" required>
-                            <select id="new-flavor-category" required>
-                                <option value="" disabled selected>Choisir une catégorie</option>
-                                <option value="Antipasti & Crudo">Antipasti & Crudo</option>
-                                <option value="Pâtes">Pâtes</option>
-                                <option value="Viandes & Poissons">Viandes & Poissons</option>
-                                <option value="Pizze">Pizze</option>
-                                <option value="Douceurs">Douceurs</option>
-                            </select>
-                            <button type="submit">Ajouter Plat</button>
-                        </form>
+                <!-- ONGLET: PARAMÈTRES -->
+                <div id="settings-tab" class="tab-content hidden">
+                    <div class="settings-grid">
+                        <!-- Section Gestion des Serveurs -->
+                        <div class="card" id="servers-section">
+                            <h2 class="card-title">Gérer les Serveurs</h2>
+                            <ul id="servers-list" class="item-list"></ul>
+                            <form id="add-server-form" class="add-form">
+                                <input type="hidden" id="editing-server-id">
+                                <input type="text" id="new-server-name" placeholder="Prénom du serveur" required>
+                                <button type="submit">Ajouter Serveur</button>
+                            </form>
+                        </div>
+                        <!-- Section Gestion des Plats -->
+                        <div class="card" id="flavors-section">
+                            <h2 class="card-title">Gérer les Plats (Saveurs)</h2>
+                            <ul id="flavors-list" class="item-list"></ul>
+                            <form id="add-flavor-form" class="add-form">
+                                <input type="hidden" id="editing-flavor-id">
+                                <input type="text" id="new-flavor-text" placeholder="Nom du plat" required>
+                                <select id="new-flavor-category" required>
+                                    <option value="" disabled selected>Choisir une catégorie</option>
+                                    <option value="Antipasti & Crudo">Antipasti & Crudo</option>
+                                    <option value="Pâtes">Pâtes</option>
+                                    <option value="Viandes & Poissons">Viandes & Poissons</option>
+                                    <option value="Pizze">Pizze</option>
+                                    <option value="Douceurs">Douceurs</option>
+                                </select>
+                                <button type="submit">Ajouter Plat</button>
+                            </form>
+                        </div>
+                        <!-- Section Exporter les Données -->
+                        <div class="card" id="export-section">
+                             <h2 class="card-title">Exporter les Données</h2>
+                             <p>Sélectionnez les données à exporter. Chaque sélection sera téléchargée dans un fichier CSV séparé.</p>
+                             <div id="export-options" style="margin: 20px 0;">
+                                 <div class="export-option">
+                                     <label>
+                                         <input type="checkbox" id="export-check-ranking" value="ranking">
+                                         Exporter le classement des serveurs
+                                     </label>
+                                 </div>
+                                 <div class="export-option">
+                                     <label>
+                                         <input type="checkbox" id="export-check-performance" value="performance">
+                                         Exporter la performance complète des plats
+                                     </label>
+                                 </div>
+                                  <div class="export-option">
+                                     <label>
+                                         <input type="checkbox" id="export-check-feedback" value="feedback">
+                                         Exporter tous les feedbacks internes
+                                     </label>
+                                 </div>
+                             </div>
+                             <button id="export-selected-btn" class="export-btn">Lancer l'Exportation</button>
+                        </div>
+                        <!-- Section Zone de Danger -->
+                        <div class="card danger-zone">
+                            <h2 class="card-title">Zone de Danger</h2>
+                            <p>Cette action réinitialisera toutes les statistiques d'avis et de performance du menu. Les serveurs, plats et feedbacks internes ne seront pas affectés.</p>
+                            <button id="reset-data-btn">Réinitialiser les Données Reçues</button>
+                        </div>
                     </div>
                 </div>
-                <div class="card danger-zone">
-                    <h2 class="card-title">Zone de Danger</h2>
-                    <p>Cette action réinitialisera toutes les statistiques d'avis et de performance du menu. Les serveurs, plats et feedbacks internes ne seront pas affectés.</p>
-                    <button id="reset-data-btn">Réinitialiser les Données Reçues</button>
-                </div>
-            </div>
 
-            <div id="export-tab" class="tab-content hidden">
-                <div class="card card-full">
-                    <h2 class="card-title">Exporter les Données</h2>
-                    <p>Sélectionnez les données à exporter. Chaque sélection sera téléchargée dans un fichier CSV séparé.</p>
-                    
-                    <div id="export-options" style="margin: 30px 0; display: flex; flex-direction: column; gap: 20px;">
-                        <label class="export-option">
-                            <input type="checkbox" id="export-check-ranking" value="ranking">
-                            Exporter le classement des serveurs
-                        </label>
-                        <label class="export-option">
-                            <input type="checkbox" id="export-check-performance" value="performance">
-                            Exporter la performance complète des plats
-                        </label>
-                        <label class="export-option">
-                            <input type="checkbox" id="export-check-feedback" value="feedback">
-                            Exporter tous les feedbacks internes
-                        </label>
-                    </div>
-        
-                    <button id="export-selected-btn" class="export-btn">Lancer l'Exportation</button>
-                </div>
-            </div>
-
-        </main>
+            </main>
+        </div>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIGURATION & CONSTANTES ---
         const API_BASE_URL = 'https://siena-avis.onrender.com';
-        // Le mot de passe n'est plus stocké globalement. Le token JWT le remplace.
-        let charts = { top3: null, top10: null, categoryPie: null, reviewsTrend: null, serviceQualities: null, atmosphere: null };
+        let charts = { 
+            reviewsTrend: null, 
+            serverDistribution: null, // Remplacement de top3
+            top10: null, 
+            categoryPie: null, 
+            serviceQualities: null, 
+            atmosphere: null 
+        };
+        const pageTitles = {
+            overview: "Vue d'ensemble",
+            'stats-serveurs': "Statistiques des Serveurs",
+            'performance-menu': "Performance du Menu",
+            'synthese-client': "Synthèse des Retours Client",
+            'feedback-interne': "Feedbacks Internes",
+            settings: "Paramètres & Gestion"
+        };
 
-        // --- SÉLECTEURS DOM (inchangés pour la plupart) ---
+        // --- SÉLECTEURS DOM ---
         const passwordModal = document.getElementById('password-modal');
         const passwordForm = document.getElementById('password-form');
         const passwordInput = document.getElementById('password-input');
         const passwordError = document.getElementById('password-error');
         const submitBtn = document.getElementById('submit-password-btn');
-        const mainContent = document.getElementById('main-content');
+        const mainLayout = document.getElementById('main-layout');
         const tabs = document.querySelectorAll('.nav-tab[data-tab]');
         const tabContents = document.querySelectorAll('.tab-content');
-        const resetDataBtn = document.getElementById('reset-data-btn');
-        const confirmResetModal = document.getElementById('confirm-reset-modal');
-        const cancelResetBtn = document.getElementById('cancel-reset-btn');
-        const confirmResetBtn = document.getElementById('confirm-reset-btn');
+        const pageTitleEl = document.getElementById('page-title');
         const globalPeriodFilter = document.getElementById('global-period-filter');
         const globalPeriodSelect = document.getElementById('global-period-select');
-        const exportSelectedBtn = document.getElementById('export-selected-btn');
-        const exportCheckRanking = document.getElementById('export-check-ranking');
-        const exportCheckPerformance = document.getElementById('export-check-performance');
-        const exportCheckFeedback = document.getElementById('export-check-feedback');
-
-        const dataForExport = {
-            serverRanking: [],
-            dishPerformance: []
-        };
-
-        // --- NOUVELLE LOGIQUE D'AUTHENTIFICATION ---
-
-        // Vérifie si un token existe déjà dans sessionStorage
+        
+        // --- LOGIQUE D'AUTHENTIFICATION (inchangée) ---
         const token = sessionStorage.getItem('jwt_token');
         if (token) {
-            // Si un token existe, on suppose que l'utilisateur est connecté
             passwordModal.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
-            const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
-            globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
-            loadDataForTab(activeTabName);
+            mainLayout.classList.remove('hidden');
+            setupResponsiveSidebar();
+            loadDataForTab(document.querySelector('.nav-tab.active').dataset.tab);
         }
 
-        // Écouteur pour le formulaire de connexion
         passwordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = passwordInput.value;
@@ -401,29 +679,21 @@
             passwordError.textContent = '';
 
             try {
-                // Envoi de la requête de login au nouvel endpoint /api/login
                 const response = await fetch(`${API_BASE_URL}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: 'admin', password: password })
                 });
 
-                if (!response.ok) {
-                    throw new Error("Mot de passe incorrect.");
-                }
-
-                const data = await response.json();
+                if (!response.ok) throw new Error("Mot de passe incorrect.");
                 
-                // Stockage du token dans sessionStorage
+                const data = await response.json();
                 sessionStorage.setItem('jwt_token', data.access_token);
 
-                // Affichage du contenu principal
                 passwordModal.classList.add('hidden');
-                mainContent.classList.remove('hidden');
-                const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
-                const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
-                globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
-                loadDataForTab(activeTabName);
+                mainLayout.classList.remove('hidden');
+                setupResponsiveSidebar();
+                loadDataForTab(document.querySelector('.nav-tab.active').dataset.tab);
 
             } catch (error) {
                 passwordError.textContent = error.message;
@@ -433,66 +703,78 @@
             }
         });
 
-        // --- MISE À JOUR DE fetchWithAuth ---
         async function fetchWithAuth(url, options = {}) {
-            // Récupération du token depuis sessionStorage
             const token = sessionStorage.getItem('jwt_token');
             if (!token) {
-                // Si pas de token, on déconnecte l'utilisateur
                 logout();
                 throw new Error("Session expirée. Veuillez vous reconnecter.");
             }
-
-            // Ajout de l'en-tête d'autorisation "Bearer"
-            const headers = { 
-                ...options.headers, 
-                'Authorization': 'Bearer ' + token 
-            };
-
+            const headers = { ...options.headers, 'Authorization': 'Bearer ' + token };
             if (options.body && typeof options.body !== 'string') {
                 headers['Content-Type'] = 'application/json';
                 options.body = JSON.stringify(options.body);
             }
-
             const response = await fetch(url, { ...options, headers });
-
-            // Si le token est invalide ou expiré (erreur 401 ou 422), on déconnecte
             if (response.status === 401 || response.status === 422) {
                 logout();
                 throw new Error("Session expirée. Veuillez vous reconnecter.");
             }
-
-            if (!response.ok) {
-                throw new Error(`Erreur du serveur (status ${response.status})`);
-            }
-            
+            if (!response.ok) throw new Error(`Erreur du serveur (status ${response.status})`);
             const contentType = response.headers.get("content-type");
             return contentType?.includes("application/json") ? response.json() : response.text();
         }
 
-        // Fonction de déconnexion
         function logout() {
-            sessionStorage.removeItem('jwt_token'); // Supprime le token
-            mainContent.classList.add('hidden');
+            sessionStorage.removeItem('jwt_token');
+            mainLayout.classList.add('hidden');
             passwordModal.classList.remove('hidden');
             passwordInput.value = '';
             passwordError.textContent = 'Votre session a expiré.';
         }
 
-        // --- LOGIQUE DES ONGLETS ET CHARGEMENT DES DONNÉES (inchangée) ---
+        // --- LOGIQUE DE NAVIGATION & RESPONSIVE ---
+        function setupResponsiveSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menu-toggle');
+            if (window.innerWidth <= 992) {
+                menuToggle.style.display = 'block';
+            }
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 992 && !sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                }
+            });
+             window.addEventListener('resize', () => {
+                menuToggle.style.display = window.innerWidth <= 992 ? 'block' : 'none';
+                if (window.innerWidth > 992) sidebar.classList.remove('open');
+            });
+        }
+
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
                 const tabName = tab.dataset.tab;
-                tabContents.forEach(content => content.classList.toggle('hidden', content.id !== `${tabName}-tab`));
-                
-                const showGlobalFilter = ['overview', 'stats-serveurs'].includes(tabName);
-                globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
-
-                loadDataForTab(tabName);
+                switchTab(tabName);
             });
         });
+
+        function switchTab(tabName) {
+            tabs.forEach(t => t.classList.remove('active'));
+            document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.add('active');
+            
+            tabContents.forEach(content => content.classList.toggle('hidden', content.id !== `${tabName}-tab`));
+            pageTitleEl.textContent = pageTitles[tabName] || "Dashboard";
+            
+            const showGlobalFilter = ['overview', 'stats-serveurs'].includes(tabName);
+            globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
+
+            loadDataForTab(tabName);
+            
+            // Fermer la sidebar sur mobile après avoir cliqué sur un onglet
+            if (window.innerWidth <= 992) {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        }
 
         globalPeriodSelect.addEventListener('change', () => {
             const activeTab = document.querySelector('.nav-tab.active').dataset.tab;
@@ -500,152 +782,178 @@
                 loadDataForTab(activeTab);
             }
         });
-        
+
         function loadDataForTab(tabName) {
-            // Les fonctions de chargement appellent maintenant la nouvelle version de fetchWithAuth
             switch(tabName) {
                 case 'overview': loadOverviewData(); break;
                 case 'stats-serveurs': loadServerStatsData(); break;
+                case 'performance-menu': loadMenuPerformanceData(); break;
                 case 'synthese-client': loadQualitativeSynthesisData(); break;
-                case 'performance': loadMenuPerformanceData(); break;
-                case 'feedback': loadInternalFeedbackData('new', feedbackSearchInput.value.trim()); break;
-                case 'manage': loadManagementData(); break;
-                case 'export': /* No data to load initially */ break;
+                case 'feedback-interne': loadInternalFeedbackData('new', document.getElementById('feedback-search-input').value.trim()); break;
+                case 'settings': loadManagementData(); break;
             }
         }
-        
-        // --- TOUTES LES AUTRES FONCTIONS (loadOverviewData, loadServerStatsData, etc.) RESTENT IDENTIQUES ---
-        // Elles utiliseront automatiquement la nouvelle fonction fetchWithAuth qui gère le token JWT.
-        // (Le code de ces fonctions est omis ici pour la clarté, mais il est identique à l'original)
 
+        // --- NOUVELLE LOGIQUE POUR LA VUE D'ENSEMBLE ---
         async function loadOverviewData() {
             const period = globalPeriodSelect.value;
             try {
-                const data = await fetchWithAuth(`${API_BASE_URL}/dashboard?period=${period}`);
-                const { stats, trend } = data;
+                // On lance toutes les requêtes en parallèle pour la performance
+                const [overview, serverStats, menuPerf, qualSynth, unreadFeedbacks] = await Promise.all([
+                    fetchWithAuth(`${API_BASE_URL}/dashboard?period=${period}`),
+                    fetchWithAuth(`${API_BASE_URL}/api/server-stats?period=all`),
+                    fetchWithAuth(`${API_BASE_URL}/api/menu-performance?period=all`),
+                    fetchWithAuth(`${API_BASE_URL}/api/qualitative-synthesis`),
+                    fetchWithAuth(`${API_BASE_URL}/api/internal-feedback?status=new`)
+                ]);
 
+                // 1. Indicateurs clés
                 const periodTitleMap = { 'all': 'Avis (Total)', '30days': 'Avis (30 j.)', '7days': 'Avis (7 j.)' };
                 document.getElementById('reviews-period-title').textContent = periodTitleMap[period];
-                document.getElementById('reviews-period-stat').textContent = stats.reviews_in_period;
-                document.getElementById('avg-reviews-stat').textContent = stats.average_reviews_per_day;
+                document.getElementById('reviews-period-stat').textContent = overview.stats.reviews_in_period;
+                document.getElementById('avg-reviews-stat').textContent = overview.stats.average_reviews_per_day;
+                document.getElementById('unread-feedback-count').innerHTML = `${unreadFeedbacks.length} <span class="notification-dot"></span>`;
 
+                // 2. Graphique de tendance
                 if (charts.reviewsTrend) charts.reviewsTrend.destroy();
                 charts.reviewsTrend = new Chart(document.getElementById('reviews-trend-chart'), {
                     type: 'line',
                     data: {
-                        labels: trend.map(d => new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })),
+                        labels: overview.trend.map(d => new Date(d.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })),
                         datasets: [{
-                            label: 'Avis par jour',
-                            data: trend.map(d => d.count),
-                            borderColor: 'var(--brand-color)',
-                            backgroundColor: 'rgba(191, 91, 63, 0.1)',
-                            fill: true,
-                            tension: 0.4
+                            label: 'Avis par jour', data: overview.trend.map(d => d.count),
+                            borderColor: 'var(--brand-color)', backgroundColor: 'var(--brand-color-light)',
+                            fill: true, tension: 0.4
                         }]
                     },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-                        plugins: { legend: { display: false } }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
                 });
-            } catch (error) { 
-                console.error("Erreur chargement Overview:", error);
-                // La fonction logout est appelée par fetchWithAuth en cas d'erreur 401/422
-             }
+
+                // 3. Rendu des widgets
+                renderTopServersWidget(serverStats.slice(0, 3));
+                renderTopDishesWidget(menuPerf.slice(0, 3));
+                renderTopServiceQualityWidget(qualSynth.service_qualities.slice(0, 3));
+                renderLatestFeedbackWidget(unreadFeedbacks[0]);
+
+            } catch (error) { console.error("Erreur chargement Overview:", error); }
         }
 
+        function renderTopServersWidget(data) {
+            const container = document.getElementById('top-servers-widget');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Pas de données de serveurs.</p>'; return;
+            }
+            container.innerHTML = `<ul>${data.map(s => `
+                <li>
+                    <div class="avatar-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${s.server}</div>
+                    </div>
+                    <span class="item-count">${s.count} avis</span>
+                </li>`).join('')}</ul>`;
+        }
+        
+        function renderTopDishesWidget(data) {
+            const container = document.getElementById('top-dishes-widget');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Pas de données de plats.</p>'; return;
+            }
+            container.innerHTML = `<ul>${data.map(d => `
+                <li>
+                    <div class="avatar-placeholder" style="border-radius: 8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M21.18 18.82L15 12.64V4c0-1.1-.9-2-2-2h-2c-1.1 0-2 .9-2 2v8.64L2.82 18.82A2 2 0 004.59 22h14.82a2 2 0 001.77-3.18zM11 4h2v7h-2V4z"/></svg>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${d.dish_name}</div>
+                        <div class="item-meta">${d.dish_category}</div>
+                    </div>
+                    <span class="item-count">${d.selection_count}</span>
+                </li>`).join('')}</ul>`;
+        }
+
+        function renderTopServiceQualityWidget(data) {
+            const container = document.getElementById('top-quality-widget');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Pas de données de qualité.</p>'; return;
+            }
+            container.innerHTML = `<ul>${data.map(q => `
+                <li>
+                    <div class="avatar-placeholder">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${q.value}</div>
+                    </div>
+                    <span class="item-count">${q.count} fois</span>
+                </li>`).join('')}</ul>`;
+        }
+
+        function renderLatestFeedbackWidget(feedback) {
+            const container = document.getElementById('latest-feedback-widget');
+            if (!feedback) {
+                container.innerHTML = '<p>Aucun nouveau feedback interne.</p>'; return;
+            }
+            container.innerHTML = `
+                <div class="feedback-preview" data-goto-feedback="true">
+                    <p><strong>De : ${feedback.server_name}</strong></p>
+                    <p class="item-meta">${feedback.feedback_text.substring(0, 100)}...</p>
+                </div>`;
+        }
+        
+        // --- LOGIQUE POUR LES AUTRES ONGLETS (mise à jour) ---
         async function loadServerStatsData() {
             const period = globalPeriodSelect.value;
             try {
                 const ranking = await fetchWithAuth(`${API_BASE_URL}/api/server-stats?period=${period}`);
                 dataForExport.serverRanking = ranking;
                 const rankingTableBody = document.querySelector('#ranking-table tbody');
-                rankingTableBody.innerHTML = ranking.length ? ranking.map((item, index) => `<tr><td>${index + 1}</td><td>${item.server}</td><td style="text-align:right;">${item.count}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;">Aucun avis pour cette période.</td></tr>';
+                rankingTableBody.innerHTML = ranking.length ? ranking.map((item, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.server}</td>
+                        <td style="text-align:center;"><span class="trend-icon trend-stable">―</span></td>
+                        <td style="text-align:right;">${item.count}</td>
+                    </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;">Aucun avis pour cette période.</td></tr>';
                 
-                if (charts.top3) charts.top3.destroy();
-                const top3Data = ranking.slice(0, 3);
-                charts.top3 = new Chart(document.getElementById('top3-chart'), {
-                    type: 'bar',
+                // NOUVEAU: Graphique Donut
+                if (charts.serverDistribution) charts.serverDistribution.destroy();
+                charts.serverDistribution = new Chart(document.getElementById('server-distribution-chart'), {
+                    type: 'doughnut',
                     data: {
-                        labels: top3Data.map(item => item.server),
-                        datasets: [{ label: 'Avis', data: top3Data.map(item => item.count), backgroundColor: 'rgba(191, 91, 63, 0.8)' }]
+                        labels: ranking.map(item => item.server),
+                        datasets: [{ 
+                            label: 'Avis', 
+                            data: ranking.map(item => item.count),
+                            backgroundColor: ['#BF5B3F', '#E7A977', '#FADCA5', '#A68A64', '#665A48', '#9E6B55'],
+                            borderColor: 'var(--surface-color)',
+                            borderWidth: 3
+                        }]
                     },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
                 });
             } catch (error) {
                 console.error("Erreur chargement Stats Serveurs:", error);
-                document.querySelector('#ranking-table tbody').innerHTML = `<tr><td colspan="3" style="text-align:center;">${error.message}</td></tr>`;
+                document.querySelector('#ranking-table tbody').innerHTML = `<tr><td colspan="4" style="text-align:center;">${error.message}</td></tr>`;
             }
         }
-
-        async function loadQualitativeSynthesisData() {
-            try {
-                const data = await fetchWithAuth(`${API_BASE_URL}/api/qualitative-synthesis`);
-                renderQualitativeSynthesis(data);
-            } catch (error) {
-                console.error("Erreur chargement Synthèse Client:", error);
-                document.getElementById('service-qualities-chart').parentElement.innerHTML = `<p>${error.message}</p>`;
-                document.getElementById('atmosphere-chart').parentElement.innerHTML = `<p>${error.message}</p>`;
-            }
-        }
-
-        function renderQualitativeSynthesis(data) {
-            const serviceData = data.service_qualities || [];
-            const atmosphereData = data.atmosphere || [];
-            const serviceCtx = document.getElementById('service-qualities-chart');
-            const atmosphereCtx = document.getElementById('atmosphere-chart');
-
-            if (charts.serviceQualities) charts.serviceQualities.destroy();
-            if(serviceData.length > 0) {
-                charts.serviceQualities = new Chart(serviceCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: serviceData.map(item => item.value),
-                        datasets: [{ label: 'Sélections', data: serviceData.map(item => item.count), backgroundColor: 'rgba(191, 91, 63, 0.8)' }]
-                    },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-                });
-            } else {
-                serviceCtx.parentElement.innerHTML = '<p>Pas de données pour les qualités de service.</p>';
-            }
-
-            if (charts.atmosphere) charts.atmosphere.destroy();
-            if(atmosphereData.length > 0) {
-                charts.atmosphere = new Chart(atmosphereCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: atmosphereData.map(item => item.value),
-                        datasets: [{ label: 'Sélections', data: atmosphereData.map(item => item.count), backgroundColor: 'rgba(63, 111, 191, 0.8)' }]
-                    },
-                    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-                });
-            } else {
-                 atmosphereCtx.parentElement.innerHTML = '<p>Pas de données pour l\'atmosphère.</p>';
-            }
-        }
-
-        const performanceState = { allData: [], currentSort: { column: 'selection_count', direction: 'desc' } };
-        const periodFilter = document.getElementById('period-filter');
-        const categoryFilter = document.getElementById('category-filter');
-        const tableContainer = document.getElementById('full-data-table-container');
 
         async function loadMenuPerformanceData() {
-            const period = periodFilter.value;
+            const period = document.getElementById('perf-period-filter').value;
             try {
                 const data = await fetchWithAuth(`${API_BASE_URL}/api/menu-performance?period=${period}`);
                 performanceState.allData = data;
                 const categories = [...new Set(data.map(item => item.dish_category))];
-                categoryFilter.innerHTML = '<option value="all">Toutes les catégories</option>' + categories.sort().map(cat => `<option value="${cat}">${cat}</option>`).join('');
+                document.getElementById('perf-category-filter').innerHTML = '<option value="all">Toutes les catégories</option>' + categories.sort().map(cat => `<option value="${cat}">${cat}</option>`).join('');
                 renderPerformance();
-            } catch (error) {
-                console.error("Erreur chargement Performance:", error);
-                tableContainer.innerHTML = `<p>${error.message}</p>`;
-            }
+            } catch (error) { console.error("Erreur chargement Performance:", error); }
         }
 
         function renderPerformance() {
-            let filteredData = categoryFilter.value === 'all' ? performanceState.allData : performanceState.allData.filter(item => item.dish_category === categoryFilter.value);
+            let filteredData = document.getElementById('perf-category-filter').value === 'all' 
+                ? performanceState.allData 
+                : performanceState.allData.filter(item => item.dish_category === document.getElementById('perf-category-filter').value);
             
             if (charts.top10) charts.top10.destroy();
             if (charts.categoryPie) charts.categoryPie.destroy();
@@ -657,6 +965,13 @@
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
 
+            const flopsData = [...filteredData].sort((a, b) => a.selection_count - b.selection_count).slice(0, 10);
+            const flopsTableContainer = document.getElementById('flops-table-container');
+            let flopsTableHTML = '<table><thead><tr><th>Plat</th><th style="text-align:right;">Sélections</th></tr></thead><tbody>';
+            flopsTableHTML += flopsData.length > 0 ? flopsData.map(item => `<tr><td>${item.dish_name}</td><td style="text-align:right;">${item.selection_count}</td></tr>`).join('') : '<tr><td colspan="2" style="text-align:center;">Données insuffisantes.</td></tr>';
+            flopsTableContainer.innerHTML = flopsTableHTML + '</tbody></table>';
+            
+            // Les autres graphiques et tables restent les mêmes...
             const categoryCounts = filteredData.reduce((acc, item) => {
                 acc[item.dish_category] = (acc[item.dish_category] || 0) + item.selection_count;
                 return acc;
@@ -666,75 +981,79 @@
                 type: 'pie',
                 data: {
                     labels: Object.keys(categoryCounts),
-                    datasets: [{
-                        data: Object.values(categoryCounts),
-                        backgroundColor: pieChartColors,
-                        borderColor: 'var(--surface-color)',
-                        borderWidth: 2
-                    }]
+                    datasets: [{ data: Object.values(categoryCounts), backgroundColor: pieChartColors, borderColor: 'var(--surface-color)', borderWidth: 2 }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 15 } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 15 } } } }
             });
 
-            const sortedData = [...filteredData].sort((a, b) => {
-                const aVal = a[performanceState.currentSort.column];
-                const bVal = b[performanceState.currentSort.column];
-                const comparison = typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
-                return performanceState.currentSort.direction === 'asc' ? comparison : -comparison;
-            });
+            const sortedData = [...filteredData].sort((a, b) => b.selection_count - a.selection_count);
             dataForExport.dishPerformance = sortedData;
-            let tableHTML = '<table><thead><tr><th data-sort="dish_name">Plat</th><th data-sort="dish_category">Catégorie</th><th data-sort="selection_count">Sélections</th></tr></thead><tbody>';
-            tableHTML += sortedData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
-            tableContainer.innerHTML = tableHTML + '</tbody></table>';
-
-            const flopsTableContainer = document.getElementById('flops-table-container');
-            const flopsData = [...filteredData].sort((a, b) => a.selection_count - b.selection_count).slice(0, 10);
-            let flopsTableHTML = '<table><thead><tr><th>Plat</th><th>Catégorie</th><th>Sélections</th></tr></thead><tbody>';
-            if (flopsData.length > 0) {
-                flopsTableHTML += flopsData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
-            } else {
-                flopsTableHTML += '<tr><td colspan="3" style="text-align:center;">Données insuffisantes.</td></tr>';
-            }
-            flopsTableContainer.innerHTML = flopsTableHTML + '</tbody></table>';
+            let tableHTML = '<table><thead><tr><th>Plat</th><th>Catégorie</th><th style="text-align:right;">Sélections</th></tr></thead><tbody>';
+            tableHTML += sortedData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td style="text-align:right;">${item.selection_count}</td></tr>`).join('');
+            document.getElementById('full-data-table-container').innerHTML = tableHTML + '</tbody></table>';
         }
-        
-        periodFilter.addEventListener('change', loadMenuPerformanceData);
-        categoryFilter.addEventListener('change', renderPerformance);
-        tableContainer.addEventListener('click', (e) => {
-            if (e.target.dataset.sort) {
-                const column = e.target.dataset.sort;
-                if (performanceState.currentSort.column === column) {
-                    performanceState.currentSort.direction = performanceState.currentSort.direction === 'asc' ? 'desc' : 'asc';
-                } else {
-                    performanceState.currentSort.column = column;
-                    performanceState.currentSort.direction = 'desc';
-                }
-                renderPerformance();
+
+        // --- GESTION DES ÉVÉNEMENTS ---
+        // Le reste du code JS (gestion des feedbacks, des paramètres, export, etc.) est conservé,
+        // mais les sélecteurs et la logique d'initialisation sont adaptés à la nouvelle structure.
+        // Les fonctions `loadQualitativeSynthesisData`, `loadInternalFeedbackData`, `loadManagementData`
+        // et leurs helpers restent fonctionnels.
+
+        // --- Initialisation des écouteurs pour la nouvelle structure ---
+        document.getElementById('link-to-servers').addEventListener('click', (e) => { e.preventDefault(); switchTab('stats-serveurs'); });
+        document.getElementById('link-to-menu').addEventListener('click', (e) => { e.preventDefault(); switchTab('performance-menu'); });
+        document.getElementById('link-to-synthesis').addEventListener('click', (e) => { e.preventDefault(); switchTab('synthese-client'); });
+        document.getElementById('link-to-feedback').addEventListener('click', (e) => { e.preventDefault(); switchTab('feedback-interne'); });
+        document.getElementById('overview-tab').addEventListener('click', (e) => {
+            if (e.target.closest('[data-goto-feedback]')) {
+                switchTab('feedback-interne');
             }
         });
+
+        // Copie des fonctions et écouteurs existants en les adaptant
+        const performanceState = { allData: [], currentSort: { column: 'selection_count', direction: 'desc' } };
+        const dataForExport = { serverRanking: [], dishPerformance: [] };
+        
+        document.getElementById('perf-period-filter').addEventListener('change', loadMenuPerformanceData);
+        document.getElementById('perf-category-filter').addEventListener('change', renderPerformance);
 
         const feedbackState = { currentStatus: 'new' };
         const feedbackTabsContainer = document.getElementById('feedback-status-tabs');
         const feedbackListContainer = document.getElementById('feedback-list');
         const feedbackSearchInput = document.getElementById('feedback-search-input');
 
+        async function loadQualitativeSynthesisData() {
+            try {
+                const data = await fetchWithAuth(`${API_BASE_URL}/api/qualitative-synthesis`);
+                const serviceData = data.service_qualities || [];
+                const atmosphereData = data.atmosphere || [];
+                const serviceCtx = document.getElementById('service-qualities-chart');
+                const atmosphereCtx = document.getElementById('atmosphere-chart');
+
+                if (charts.serviceQualities) charts.serviceQualities.destroy();
+                if(serviceData.length > 0) {
+                    charts.serviceQualities = new Chart(serviceCtx, { type: 'bar', data: { labels: serviceData.map(item => item.value), datasets: [{ label: 'Sélections', data: serviceData.map(item => item.count), backgroundColor: 'rgba(191, 91, 63, 0.8)' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+                } else { serviceCtx.parentElement.innerHTML = '<p>Pas de données.</p>'; }
+
+                if (charts.atmosphere) charts.atmosphere.destroy();
+                if(atmosphereData.length > 0) {
+                    charts.atmosphere = new Chart(atmosphereCtx, { type: 'bar', data: { labels: atmosphereData.map(item => item.value), datasets: [{ label: 'Sélections', data: atmosphereData.map(item => item.count), backgroundColor: 'rgba(63, 111, 191, 0.8)' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+                } else { atmosphereCtx.parentElement.innerHTML = '<p>Pas de données.</p>'; }
+            } catch (error) { console.error("Erreur Synthèse Client:", error); }
+        }
+
         async function loadInternalFeedbackData(status, searchTerm = '') {
             feedbackState.currentStatus = status;
             feedbackListContainer.innerHTML = '<p>Chargement...</p>';
-            feedbackTabsContainer.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+            feedbackTabsContainer.querySelectorAll('button').forEach(t => t.classList.toggle('active', t.dataset.status === status));
             
             const url = new URL(`${API_BASE_URL}/api/internal-feedback`);
             url.searchParams.append('status', status);
-            if (searchTerm) {
-                url.searchParams.append('search', searchTerm);
-            }
+            if (searchTerm) url.searchParams.append('search', searchTerm);
 
             try {
                 const feedbacks = await fetchWithAuth(url.toString());
-                let html = feedbacks.length === 0 
+                feedbackListContainer.innerHTML = feedbacks.length === 0 
                     ? '<p>Aucun feedback ne correspond à votre recherche.</p>' 
                     : feedbacks.map(fb => {
                         const formattedDate = new Date(fb.created_at).toLocaleString('fr-FR');
@@ -743,7 +1062,7 @@
                         if (fb.status === 'read') actionsHTML = `<button data-action="archive">Archiver</button>`;
                         if (fb.status === 'archived') actionsHTML = `<button data-action="new">Réactiver</button>`;
                         
-                        let feedbackText = fb.feedback_text;
+                        let feedbackText = fb.feedback_text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
                         if (searchTerm) {
                             const regex = new RegExp(`(${searchTerm.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
                             feedbackText = feedbackText.replace(regex, '<mark>$1</mark>');
@@ -755,11 +1074,7 @@
                                     <div class="feedback-actions">${actionsHTML}</div>
                                 </div>`;
                     }).join('');
-                feedbackListContainer.innerHTML = html;
-            } catch (error) {
-                console.error("Erreur chargement Feedback:", error);
-                feedbackListContainer.innerHTML = `<p>${error.message}</p>`;
-            }
+            } catch (error) { feedbackListContainer.innerHTML = `<p>${error.message}</p>`; }
         }
 
         feedbackSearchInput.addEventListener('input', () => {
@@ -781,6 +1096,9 @@
                 try {
                     await fetchWithAuth(`${API_BASE_URL}/api/internal-feedback/${id}/status`, { method: 'PUT', body: { status: newStatus } });
                     loadInternalFeedbackData(feedbackState.currentStatus, feedbackSearchInput.value.trim());
+                    if (document.querySelector('.nav-tab.active').dataset.tab === 'overview') {
+                        loadOverviewData(); // Rafraîchir le compteur sur la vue d'ensemble
+                    }
                 } catch (error) { alert(`Erreur: ${error.message}`); }
             }
         });
@@ -815,188 +1133,74 @@
             }).join('');
         }
 
-        function resetServerForm() {
-            manage.servers.form.reset();
-            manage.servers.idInput.value = '';
-            manage.servers.btn.textContent = 'Ajouter Serveur';
-            manage.servers.btn.classList.remove('edit-mode');
-        }
+        function resetServerForm() { manage.servers.form.reset(); manage.servers.idInput.value = ''; manage.servers.btn.textContent = 'Ajouter Serveur'; manage.servers.btn.classList.remove('edit-mode'); }
+        function resetFlavorForm() { manage.flavors.form.reset(); manage.flavors.idInput.value = ''; manage.flavors.btn.textContent = 'Ajouter Plat'; manage.flavors.btn.classList.remove('edit-mode'); }
 
-        function resetFlavorForm() {
-            manage.flavors.form.reset();
-            manage.flavors.idInput.value = '';
-            manage.flavors.btn.textContent = 'Ajouter Plat';
-            manage.flavors.btn.classList.remove('edit-mode');
-        }
-
-        manage.servers.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = manage.servers.idInput.value;
-            const name = manage.servers.nameInput.value.trim();
-            if (!name) return;
-            const url = id ? `${API_BASE_URL}/api/servers/${id}` : `${API_BASE_URL}/api/servers`;
-            const method = id ? 'PUT' : 'POST';
-            await fetchWithAuth(url, { method, body: { name } });
-            resetServerForm();
-            loadManagementData();
-        });
-
-        manage.flavors.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = manage.flavors.idInput.value;
-            const text = manage.flavors.textInput.value.trim();
-            const category = manage.flavors.catInput.value;
-            if (!text || !category) return;
-            const url = id ? `${API_BASE_URL}/api/options/flavors/${id}` : `${API_BASE_URL}/api/options/flavors`;
-            const method = id ? 'PUT' : 'POST';
-            await fetchWithAuth(url, { method, body: { text, category } });
-            resetFlavorForm();
-            loadManagementData();
-        });
-
-        document.getElementById('manage-tab').addEventListener('click', async (e) => {
-            const target = e.target.closest('.action-btn');
-            if (!target) return;
-
+        manage.servers.form.addEventListener('submit', async (e) => { e.preventDefault(); const id = manage.servers.idInput.value; const name = manage.servers.nameInput.value.trim(); if (!name) return; const url = id ? `${API_BASE_URL}/api/servers/${id}` : `${API_BASE_URL}/api/servers`; const method = id ? 'PUT' : 'POST'; await fetchWithAuth(url, { method, body: { name } }); resetServerForm(); loadManagementData(); });
+        manage.flavors.form.addEventListener('submit', async (e) => { e.preventDefault(); const id = manage.flavors.idInput.value; const text = manage.flavors.textInput.value.trim(); const category = manage.flavors.catInput.value; if (!text || !category) return; const url = id ? `${API_BASE_URL}/api/options/flavors/${id}` : `${API_BASE_URL}/api/options/flavors`; const method = id ? 'PUT' : 'POST'; await fetchWithAuth(url, { method, body: { text, category } }); resetFlavorForm(); loadManagementData(); });
+        
+        document.getElementById('settings-tab').addEventListener('click', async (e) => {
+            const target = e.target.closest('.action-btn'); if (!target) return;
             const { id, type } = target.dataset;
-
             if (target.classList.contains('delete-btn')) {
                 const endpoint = type === 'servers' ? `/api/servers/${id}` : `/api/options/flavors/${id}`;
-                if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
-                    await fetchWithAuth(`${API_BASE_URL}${endpoint}`, { method: 'DELETE' });
-                    loadManagementData();
-                }
+                if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) { await fetchWithAuth(`${API_BASE_URL}${endpoint}`, { method: 'DELETE' }); loadManagementData(); }
             } else if (target.classList.contains('edit-btn')) {
-                if (type === 'servers') {
-                    resetFlavorForm();
-                    manage.servers.idInput.value = id;
-                    manage.servers.nameInput.value = target.dataset.name;
-                    manage.servers.btn.textContent = 'Enregistrer les modifications';
-                    manage.servers.btn.classList.add('edit-mode');
-                    manage.servers.nameInput.focus();
-                } else if (type === 'flavors') {
-                    resetServerForm();
-                    manage.flavors.idInput.value = id;
-                    manage.flavors.textInput.value = target.dataset.text;
-                    manage.flavors.catInput.value = target.dataset.category;
-                    manage.flavors.btn.textContent = 'Enregistrer les modifications';
-                    manage.flavors.btn.classList.add('edit-mode');
-                    manage.flavors.textInput.focus();
-                }
+                if (type === 'servers') { resetFlavorForm(); manage.servers.idInput.value = id; manage.servers.nameInput.value = target.dataset.name; manage.servers.btn.textContent = 'Enregistrer'; manage.servers.btn.classList.add('edit-mode'); manage.servers.nameInput.focus(); } 
+                else if (type === 'flavors') { resetServerForm(); manage.flavors.idInput.value = id; manage.flavors.textInput.value = target.dataset.text; manage.flavors.catInput.value = target.dataset.category; manage.flavors.btn.textContent = 'Enregistrer'; manage.flavors.btn.classList.add('edit-mode'); manage.flavors.textInput.focus(); }
             }
         });
 
-        resetDataBtn.addEventListener('click', () => {
-            confirmResetModal.classList.remove('hidden');
-        });
-
-        cancelResetBtn.addEventListener('click', () => {
-            confirmResetModal.classList.add('hidden');
-        });
-
+        const resetDataBtn = document.getElementById('reset-data-btn');
+        const confirmResetModal = document.getElementById('confirm-reset-modal');
+        const cancelResetBtn = document.getElementById('cancel-reset-btn');
+        const confirmResetBtn = document.getElementById('confirm-reset-btn');
+        resetDataBtn.addEventListener('click', () => confirmResetModal.classList.remove('hidden'));
+        cancelResetBtn.addEventListener('click', () => confirmResetModal.classList.add('hidden'));
         confirmResetBtn.addEventListener('click', async () => {
-            try {
-                await fetchWithAuth(`${API_BASE_URL}/api/reset-data`, { method: 'POST' });
-                alert('Données réinitialisées avec succès.');
-                dataForExport.serverRanking = [];
-                dataForExport.dishPerformance = [];
-                loadDataForTab('overview');
-                loadDataForTab('stats-serveurs');
-                loadDataForTab('performance');
-                loadDataForTab('synthese-client');
-            } catch (error) {
-                alert(`Erreur: ${error.message}`);
-            } finally {
-                confirmResetModal.classList.add('hidden');
-            }
+            try { await fetchWithAuth(`${API_BASE_URL}/api/reset-data`, { method: 'POST' }); alert('Données réinitialisées.'); location.reload(); } 
+            catch (error) { alert(`Erreur: ${error.message}`); } 
+            finally { confirmResetModal.classList.add('hidden'); }
         });
 
+        const exportSelectedBtn = document.getElementById('export-selected-btn');
         function downloadCSV(data, filename = 'export.csv') {
-            if (!data || data.length === 0) {
-                alert("Aucune donnée à exporter.");
-                return;
-            }
+            if (!data || data.length === 0) { alert("Aucune donnée à exporter."); return; }
             const headers = Object.keys(data[0]);
-            const csvRows = [
-                '\uFEFF' + headers.join(','), 
-                ...data.map(row =>
-                    headers.map(fieldName => {
-                        let field = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];
-                        let fieldString = field.toString();
-                        if (fieldString.includes('"')) {
-                            fieldString = fieldString.replace(/"/g, '""');
-                        }
-                        if (fieldString.includes(',') || fieldString.includes('\n') || fieldString.includes('\r')) {
-                            fieldString = `"${fieldString}"`;
-                        }
-                        return fieldString;
-                    }).join(',')
-                )
-            ];
-
+            const csvRows = ['\uFEFF' + headers.join(','), ...data.map(row => headers.map(fieldName => { let field = row[fieldName] ?? ''; let fieldString = field.toString(); if (fieldString.includes('"')) fieldString = `"${fieldString.replace(/"/g, '""')}"`; if (fieldString.includes(',')) fieldString = `"${fieldString}"`; return fieldString; }).join(','))];
             const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
-            if (link.download !== undefined) {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', filename);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         exportSelectedBtn.addEventListener('click', async () => {
             const date = new Date().toLocaleDateString('fr-CA');
             let exportedCount = 0;
-
-            if (exportCheckRanking.checked) {
-                const formattedData = dataForExport.serverRanking.map((item, index) => ({
-                    '#': index + 1,
-                    'Serveur': item.server,
-                    'Avis': item.count
-                }));
-                downloadCSV(formattedData, `classement-serveurs-${date}.csv`);
-                exportedCount++;
+            if (document.getElementById('export-check-ranking').checked) {
+                const formattedData = dataForExport.serverRanking.map((item, index) => ({ '#': index + 1, 'Serveur': item.server, 'Avis': item.count }));
+                downloadCSV(formattedData, `classement-serveurs-${date}.csv`); exportedCount++;
             }
-
-            if (exportCheckPerformance.checked) {
-                const formattedData = dataForExport.dishPerformance.map(item => ({
-                    'Plat': item.dish_name,
-                    'Catégorie': item.dish_category,
-                    'Sélections': item.selection_count
-                }));
-                downloadCSV(formattedData, `performance-plats-${date}.csv`);
-                exportedCount++;
+            if (document.getElementById('export-check-performance').checked) {
+                const formattedData = dataForExport.dishPerformance.map(item => ({ 'Plat': item.dish_name, 'Catégorie': item.dish_category, 'Sélections': item.selection_count }));
+                downloadCSV(formattedData, `performance-plats-${date}.csv`); exportedCount++;
             }
-
-            if (exportCheckFeedback.checked) {
+            if (document.getElementById('export-check-feedback').checked) {
                 try {
-                    exportSelectedBtn.disabled = true;
-                    exportSelectedBtn.textContent = 'Export en cours...';
+                    exportSelectedBtn.disabled = true; exportSelectedBtn.textContent = 'Export en cours...';
                     const allFeedbacks = await fetchWithAuth(`${API_BASE_URL}/api/internal-feedback?status=all`);
-                    const formattedData = allFeedbacks.map(fb => ({
-                        'ID': fb.id,
-                        'Date': new Date(fb.created_at).toLocaleString('fr-FR'),
-                        'Serveur': fb.server_name,
-                        'Feedback': fb.feedback_text,
-                        'Statut': fb.status
-                    }));
-                    downloadCSV(formattedData, `feedbacks-internes-${date}.csv`);
-                    exportedCount++;
-                } catch (error) {
-                    alert(`Erreur lors de l'export des feedbacks: ${error.message}`);
-                } finally {
-                    exportSelectedBtn.disabled = false;
-                    exportSelectedBtn.textContent = "Lancer l'Exportation";
-                }
+                    const formattedData = allFeedbacks.map(fb => ({ 'ID': fb.id, 'Date': new Date(fb.created_at).toLocaleString('fr-FR'), 'Serveur': fb.server_name, 'Feedback': fb.feedback_text, 'Statut': fb.status }));
+                    downloadCSV(formattedData, `feedbacks-internes-${date}.csv`); exportedCount++;
+                } catch (error) { alert(`Erreur export feedbacks: ${error.message}`); } 
+                finally { exportSelectedBtn.disabled = false; exportSelectedBtn.textContent = "Lancer l'Exportation"; }
             }
-
-            if (exportedCount === 0) {
-                alert("Veuillez sélectionner au moins un type de données à exporter.");
-            }
+            if (exportedCount === 0) alert("Veuillez sélectionner au moins un type de données à exporter.");
         });
+
     });
     </script>
 </body>
