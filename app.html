@@ -167,7 +167,7 @@
                     <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="flavors_subtitle"></p>
                     <p class="limit-notification hidden"></p>
                     <div id="dishes-content" data-category="dish">
-                        <p>Chargement des options...</p>
+                        <p data-translate-key="loading_options">Chargement des options...</p>
                     </div>
                 </div>
                 <div class="tag-section">
@@ -175,7 +175,7 @@
                     <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
                     <p class="limit-notification hidden"></p>
                     <div class="tag-group" data-category="atmosphere" id="atmospheres-content">
-                        <!-- Le contenu sera généré par JavaScript -->
+                        <!-- Le contenu est généré par JavaScript -->
                     </div>
                 </div>
             </div>
@@ -257,7 +257,8 @@
                     loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], 
                     alert_no_option: "Veuillez sélectionner au moins une option ou laisser un feedback privé.", alert_quick_review_min: "Veuillez sélectionner au moins un point fort.", 
                     limit_reached: (limit) => `Vous avez atteint la limite de ${limit} options.`,
-                    thank_you_title: "Merci pour votre contribution !", thank_you_instructions: "<strong>Suivez ces 2 étapes :</strong><br>1. Cliquez sur 'Copier le texte'.<br>2. Cliquez sur 'Publier sur Google' et collez votre avis."
+                    thank_you_title: "Merci pour votre contribution !", thank_you_instructions: "<strong>Suivez ces 2 étapes :</strong><br>1. Cliquez sur 'Copier le texte'.<br>2. Cliquez sur 'Publier sur Google' et collez votre avis.",
+                    loading_options: "Chargement des options...", loading_error: "Erreur de chargement des options."
                 },
                 en: {
                     page_title: "Your Feedback on Siena Paris", main_title: "A memorable evening?", subtitle: "Your feedback is the finishing touch. Share what delighted your senses.", 
@@ -272,7 +273,8 @@
                     loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], 
                     alert_no_option: "Please select at least one option or leave private feedback.", alert_quick_review_min: "Please select at least one highlight.", 
                     limit_reached: (limit) => `You have reached the limit of ${limit} options.`,
-                    thank_you_title: "Thank you for your contribution!", thank_you_instructions: "<strong>Follow these 2 steps:</strong><br>1. Click 'Copy text'.<br>2. Click 'Publish on Google' and paste your review."
+                    thank_you_title: "Thank you for your contribution!", thank_you_instructions: "<strong>Follow these 2 steps:</strong><br>1. Click 'Copy text'.<br>2. Click 'Publish on Google' and paste your review.",
+                    loading_options: "Loading options...", loading_error: "Error loading options."
                 },
                 es: {
                     page_title: "Tu Opinión sobre Siena Paris", main_title: "¿Una noche memorable?", subtitle: "Tu opinión es el toque final. Comparte lo que deleitó tus sentidos.",
@@ -287,7 +289,8 @@
                     loading_messages: ["Contactando a nuestro asistente...","Analizando tu noche...","La inspiración está en camino...","Finalizando el borrador..."], 
                     alert_no_option: "Por favor, selecciona al menos una opción o deja un comentario privado.", alert_quick_review_min: "Por favor, selecciona al menos un punto fuerte.", 
                     limit_reached: (limit) => `Solo puedes seleccionar hasta ${limit} opciones para "${category}".`,
-                    thank_you_title: "¡Gracias por tu contribución!", thank_you_instructions: "<strong>Sigue estos 2 pasos:</strong><br>1. Haz clic en 'Copiar texto'.<br>2. Haz clic en 'Publicar en Google' y pega tu reseña."
+                    thank_you_title: "¡Gracias por tu contribución!", thank_you_instructions: "<strong>Sigue estos 2 pasos:</strong><br>1. Haz clic en 'Copiar texto'.<br>2. Haz clic en 'Publicar en Google' y pega tu reseña.",
+                    loading_options: "Cargando opciones...", loading_error: "Error al cargar las opciones."
                 },
                 it: {
                     page_title: "La tua Recensione su Siena Paris", main_title: "Una serata memorabile?", subtitle: "La tua opinione è il tocco finale. Condividi ciò che ha deliziato i tuoi sensi.",
@@ -302,7 +305,8 @@
                     loading_messages: ["Contattando il nostro assistente...","Analizzando la tua serata...","L'ispirazione è in arrivo...","Finalizzando la bozza..."], 
                     alert_no_option: "Seleziona almeno un'opzione o lascia un feedback privato.", alert_quick_review_min: "Seleziona almeno un punto forte.", 
                     limit_reached: (limit) => `Puoi selezionare solo fino a ${limit} opzioni per "${category}".`,
-                    thank_you_title: "Grazie per il tuo contributo!", thank_you_instructions: "<strong>Segui questi 2 passaggi:</strong><br>1. Clicca su 'Copia testo'.<br>2. Clicca su 'Pubblica su Google' e incolla la tua recensione."
+                    thank_you_title: "Grazie per il tuo contributo!", thank_you_instructions: "<strong>Segui questi 2 passaggi:</strong><br>1. Clicca su 'Copia testo'.<br>2. Clicca su 'Pubblica su Google' e incolla la tua recensione.",
+                    loading_options: "Caricamento opzioni...", loading_error: "Errore nel caricamento delle opzioni."
                 },
                 pt: {
                     page_title: "A sua Avaliação sobre o Siena Paris", main_title: "Uma noite memorável?", subtitle: "A sua opinião é o toque final. Partilhe o que encantou os seus sentidos.",
@@ -317,7 +321,8 @@
                     loading_messages: ["A contactar o nosso assistente criativo...","A analisar a sua noite memorável...","A inspiração está a caminho...","A finalizar o rascunho..."],
                     alert_no_option: "Por favor, selecione pelo menos uma opção ou deixe um feedback privado.", alert_quick_review_min: "Por favor, selecione pelo menos um ponto forte.",
                     limit_reached: (limit) => `Atingiu o limite de ${limit} opções.`,
-                    thank_you_title: "Obrigado pela sua contribuição!", thank_you_instructions: "<strong>Siga estes 2 passos:</strong><br>1. Clique em 'Copiar texto'.<br>2. Clique em 'Publicar no Google' e cole a sua avaliação."
+                    thank_you_title: "Obrigado pela sua contribuição!", thank_you_instructions: "<strong>Siga estes 2 passos:</strong><br>1. Clique em 'Copiar texto'.<br>2. Clique em 'Publicar no Google' e cole a sua avaliação.",
+                    loading_options: "A carregar opções...", loading_error: "Erro ao carregar as opções."
                 },
                 zh: {
                     page_title: "您对Siena Paris的评价", main_title: "一个难忘的夜晚？", subtitle: "您的评价是您体验的点睛之笔。分享那些让您感官愉悦的瞬间。",
@@ -334,7 +339,8 @@
                     loading_messages: ["正在联系我们的创意助理...","正在分析您难忘的夜晚...","灵感正在路上...","正在完成草稿..."],
                     alert_no_option: "请至少选择一个选项或留下私人反馈。", alert_quick_review_min: "请至少选择一个亮点。",
                     limit_reached: (limit) => `您已达到${limit}个选项的限制。`,
-                    thank_you_title: "感谢您的贡献！", thank_you_instructions: "<strong>请按照以下两个步骤操作：</strong><br>1. 点击“复制文本”。<br>2. 点击“在谷歌上发布”并粘贴您的评论。"
+                    thank_you_title: "感谢您的贡献！", thank_you_instructions: "<strong>请按照以下两个步骤操作：</strong><br>1. 点击“复制文本”。<br>2. 点击“在谷歌上发布”并粘贴您的评论。",
+                    loading_options: "加载选项...", loading_error: "加载选项时出错。"
                 }
             };
             
@@ -403,7 +409,9 @@
                     document.querySelectorAll('.lang-btn').forEach(btn => {
                         btn.classList.toggle('active', btn.dataset.lang === lang);
                     });
+                    
                     translatePage();
+                    fetchPublicData(lang);
                 }
             };
             
@@ -477,18 +485,20 @@
                 initializeCheckboxGroup('atmosphere');
             };
 
-            async function fetchPublicData() {
+            async function fetchPublicData(lang) {
                 try {
-                    const response = await fetch('https://siena-avis.onrender.com/api/public/data');
+                    const response = await fetch(`https://siena-avis.onrender.com/api/public/data?lang=${lang}`);
                     if (!response.ok) throw new Error('Network response was not ok');
                     const data = await response.json();
 
                     const servers = data.servers || [];
                     [serverSelect, serverSelectExpress].forEach(select => {
+                        const currentValue = select.value;
                         select.innerHTML = `<option value="" data-translate-key="server_choose">${getTranslation('server_choose')}</option>`;
                         servers.forEach(server => {
                             select.innerHTML += `<option value="${server.name}">${server.name}</option>`;
                         });
+                        select.value = currentValue;
                     });
 
                     const flavors = data.flavors || {};
@@ -509,7 +519,8 @@
 
                 } catch (error) {
                     console.error('Failed to fetch public data:', error);
-                    document.getElementById('dishes-content').innerHTML = '<p>Erreur de chargement des options.</p>';
+                    const dishesContent = document.getElementById('dishes-content');
+                    dishesContent.innerHTML = `<p>${getTranslation('loading_error')}</p>`;
                 }
             }
             
@@ -617,16 +628,14 @@
                 showNotification('Texte copié !');
             });
 
+            // --- Initialisation de la page ---
             document.getElementById('copyright-year').textContent = new Date().getFullYear();
-
             initializeCheckboxGroup('service_qualities');
             initializeCheckboxGroup('quick_highlight');
-            
             populateAtmospheres();
             
             const initialLang = window.location.hash.substring(1) || 'fr';
             switchLanguage(initialLang);
-            fetchPublicData();
         });
     </script>
 </body>
