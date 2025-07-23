@@ -32,8 +32,8 @@ db = SQLAlchemy(app)
 # --- MODÈLES DE LA BASE DE DONNÉES ---
 class GeneratedReview(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    server_name = db.Column(db.String(80), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    server_name = db.Column(db.String(80), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
 
 class Server(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -49,21 +49,21 @@ class MenuSelection(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     dish_name = db.Column(db.Text, nullable=False)
     dish_category = db.Column(db.Text, nullable=False)
-    selection_timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    selection_timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now(), index=True)
 
 class InternalFeedback(db.Model):
     __tablename__ = 'internal_feedback'
     id = db.Column(db.Integer, primary_key=True)
     feedback_text = db.Column(db.Text, nullable=False)
-    associated_server_id = db.Column(db.Integer, db.ForeignKey('server.id', ondelete='SET NULL'), nullable=True)
-    status = db.Column(db.Text, nullable=False, default='new')
-    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    associated_server_id = db.Column(db.Integer, db.ForeignKey('server.id', ondelete='SET NULL'), nullable=True, index=True)
+    status = db.Column(db.Text, nullable=False, default='new', index=True)
+    created_at = db.Column(db.DateTime(timezone=True), server_default=func.now(), index=True)
     server = db.relationship('Server')
 
 class QualitativeFeedback(db.Model):
     __tablename__ = 'qualitative_feedback'
     id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(100), nullable=False, index=True)
     value = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), server_default=func.now())
 
