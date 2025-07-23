@@ -35,6 +35,11 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Empêche le double scroll */
+        }
+
         body {
             font-family: var(--font-sans);
             background-color: var(--background-color);
@@ -49,6 +54,7 @@
         /* --- LAYOUT PRINCIPAL --- */
         .main-layout {
             display: flex;
+            height: 100vh;
         }
 
         .sidebar {
@@ -56,7 +62,8 @@
             background-color: var(--surface-color);
             border-right: 1px solid var(--border-color);
             padding: 20px;
-            height: 100vh;
+            box-sizing: border-box;
+            height: 100%;
             position: fixed;
             top: 0;
             left: 0;
@@ -64,6 +71,7 @@
             flex-direction: column;
             transition: width 0.3s ease;
             overflow-x: hidden;
+            z-index: 100;
         }
 
         .sidebar .logo-link {
@@ -75,14 +83,19 @@
             padding: 0 10px;
         }
         .sidebar .logo-link img {
-            width: 150px;
-            transition: width 0.3s ease;
+            height: 40px;
+            width: auto;
+            max-width: 150px;
+            transition: all 0.3s ease;
         }
 
         .main-content-area {
             margin-left: var(--sidebar-width-expanded);
             width: calc(100% - var(--sidebar-width-expanded));
+            height: 100%;
+            overflow-y: auto; /* Scroll uniquement sur la zone de contenu */
             padding: 30px;
+            box-sizing: border-box;
             animation: fadeIn .6s ease-out;
             transition: margin-left 0.3s ease, width 0.3s ease;
         }
@@ -134,10 +147,12 @@
             font-weight: 600;
         }
         .nav-tab svg { width: 20px; height: 20px; flex-shrink: 0; }
-        .nav-tab .nav-text { transition: opacity 0.2s ease; }
+        .nav-tab .nav-text { transition: opacity 0.2s ease, width 0.2s ease; }
 
         .sidebar-footer {
             margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
         }
         .sidebar-toggle-btn {
             width: 100%;
@@ -148,7 +163,7 @@
             width: var(--sidebar-width-collapsed);
         }
         .layout-collapsed .sidebar .logo-link img {
-            width: 40px;
+            max-width: 40px;
         }
         .layout-collapsed .sidebar .nav-tab {
             justify-content: center;
@@ -161,6 +176,9 @@
         .layout-collapsed .main-content-area {
             margin-left: var(--sidebar-width-collapsed);
             width: calc(100% - var(--sidebar-width-collapsed));
+        }
+        .layout-collapsed .sidebar-toggle-btn .icon-collapse {
+            transform: rotate(180deg);
         }
 
         /* --- MODALS --- */
@@ -262,14 +280,14 @@
             .overview-grid .widget-card { grid-column: span 6; }
         }
         @media (max-width: 992px) {
-            .sidebar { transform: translateX(-100%); z-index: 2000; transition: transform 0.3s ease; }
+            .sidebar { transform: translateX(-100%); z-index: 2000; transition: transform 0.3s ease; width: var(--sidebar-width-expanded); }
             .sidebar.open { transform: translateX(0); }
             .main-content-area { margin-left: 0; width: 100%; }
             .mobile-menu-toggle { display: block; position: fixed; top: 15px; left: 15px; z-index: 2001; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; cursor: pointer; }
-            .sidebar-toggle-btn { display: none; } /* Cacher le bouton de collapse desktop */
+            .sidebar-toggle-btn { display: none; }
             .content-header h1 { font-size: 2.2rem; }
             .performance-grid { grid-template-columns: 1fr; }
-            .layout-collapsed .sidebar { width: var(--sidebar-width-expanded); } /* Annuler le collapse sur mobile */
+            .layout-collapsed .sidebar { width: var(--sidebar-width-expanded); }
             .layout-collapsed .main-content-area { margin-left: 0; width: 100%; }
         }
         @media (max-width: 768px) {
@@ -305,7 +323,7 @@
     <div id="confirm-reset-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 style="color: var(--danger-color);">Êtes-vous sûr ?</h2>
-            <p>Cette action est irréversible. Toutes les données de classement, de performance et de synthèse seront définitivement supprimées.</p>
+            <p>Cette action est irréversible. Toutes les données seront définitivement supprimées.</p>
             <div class="modal-buttons">
                 <button id="cancel-reset-btn" class="cancel-btn">Annuler</button>
                 <button id="confirm-reset-btn" class="confirm-btn">Oui, réinitialiser</button>
@@ -313,13 +331,12 @@
         </div>
     </div>
 
-    <!-- LAYOUT PRINCIPAL (caché jusqu'à l'authentification) -->
-    <div class="main-layout" id="main-layout">
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="main-layout hidden" id="main-layout">
         <!-- BARRE LATÉRALE DE NAVIGATION -->
         <aside class="sidebar" id="sidebar">
             <a href="index.html" class="logo-link">
-                <!-- LOGO CORRIGÉ: Utilisation d'un placeholder fiable -->
-                <img src="https://placehold.co/150x40/BF5B3F/FFFFFF?text=Siena&font=cormorant" alt="Logo Siena Paris">
+                <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
             </a>
             <nav class="nav-tabs">
                 <button class="nav-tab active" data-tab="overview">
@@ -347,10 +364,9 @@
                     <span class="nav-text">Paramètres</span>
                 </button>
             </nav>
-            <!-- Bouton pour rétracter le menu -->
             <div class="sidebar-footer">
                 <button class="nav-tab sidebar-toggle-btn" id="sidebar-toggle">
-                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M15 18h-1.5v-3.08l-3.17 3.08-1.06-1.06 3.17-3.09H9v-1.5h3.08l-3.08-3.17 1.06-1.06 3.09 3.17V9h1.5v3.08l3.17-3.08 1.06 1.06-3.17 3.09H21v1.5h-3.08l3.08 3.17-1.06 1.06-3.09-3.17V18zM3 3h18v2H3V3zm0 16h6v2H3v-2z"/></svg>
+                     <svg class="icon-collapse" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                      <span class="nav-text">Réduire le menu</span>
                 </button>
             </div>
@@ -394,7 +410,7 @@
                 <div id="performance-menu-tab" class="tab-content hidden"><div class="filters" style="margin-bottom: 30px;"><div><label for="perf-period-filter">Période :</label><select id="perf-period-filter"><option value="all">Tout</option><option value="30days">30 derniers jours</option><option value="7days">7 derniers jours</option></select></div><div><label for="perf-category-filter">Catégorie :</label><select id="perf-category-filter"><option value="all">Toutes</option></select></div></div><div class="performance-grid"><div class="card"><h2 class="card-title">🚀 Top 10 Plats</h2><div class="chart-container" style="height: 400px;"><canvas id="top-10-chart"></canvas></div></div><div class="card"><h2 class="card-title">📉 Flop 10 Plats</h2><div id="flops-table-container" style="overflow-x: auto; max-height: 400px;"><p>Chargement...</p></div></div></div><div class="page-grid"><div class="card"><h2 class="card-title">Performance par Catégorie</h2><div class="chart-container"><canvas id="category-pie-chart"></canvas></div></div><div class="card"><h2 class="card-title">Données Complètes</h2><div id="full-data-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div></div></div></div>
                 <div id="synthese-client-tab" class="tab-content hidden"><div class="page-grid"><div class="card"><h2 class="card-title">Qualités de Service les Plus Appréciées</h2><div class="chart-container"><canvas id="service-qualities-chart"></canvas></div></div><div class="card"><h2 class="card-title">Points Forts de l'Atmosphère</h2><div class="chart-container"><canvas id="atmosphere-chart"></canvas></div></div></div></div>
                 <div id="feedback-interne-tab" class="tab-content hidden"><div class="feedback-controls"><div id="feedback-status-tabs" class="feedback-status-tabs"><button class="nav-tab active" data-status="new">Nouveaux</button><button class="nav-tab" data-status="read">Lus</button><button class="nav-tab" data-status="archived">Archivés</button></div><div class="search-container"><input type="search" id="feedback-search-input" placeholder="Rechercher un mot-clé..."></div></div><div id="feedback-list" class="feedback-list"><p>Chargement des feedbacks...</p></div></div>
-                <div id="settings-tab" class="tab-content hidden"><div class="settings-grid"><div class="card" id="servers-section"><h2 class="card-title">Gérer les Serveurs</h2><ul id="servers-list" class="item-list"></ul><form id="add-server-form" class="add-form"><input type="hidden" id="editing-server-id"><input type="text" id="new-server-name" placeholder="Prénom du serveur" required><button type="submit">Ajouter Serveur</button></form></div><div class="card" id="flavors-section"><h2 class="card-title">Gérer les Plats (Saveurs)</h2><ul id="flavors-list" class="item-list"></ul><form id="add-flavor-form" class="add-form"><input type="hidden" id="editing-flavor-id"><input type="text" id="new-flavor-text" placeholder="Nom du plat" required><select id="new-flavor-category" required><option value="" disabled selected>Choisir une catégorie</option><option value="Antipasti & Crudo">Antipasti & Crudo</option><option value="Pâtes">Pâtes</option><option value="Viandes & Poissons">Viandes & Poissons</option><option value="Pizze">Pizze</option><option value="Douceurs">Douceurs</option></select><button type="submit">Ajouter Plat</button></form></div><div class="card" id="export-section"><h2 class="card-title">Exporter les Données</h2><p>Sélectionnez les données à exporter.</p><div id="export-options" style="margin: 20px 0;"><div class="export-option"><label><input type="checkbox" id="export-check-ranking" value="ranking"> Exporter le classement des serveurs</label></div><div class="export-option"><label><input type="checkbox" id="export-check-performance" value="performance"> Exporter la performance complète des plats</label></div><div class="export-option"><label><input type="checkbox" id="export-check-feedback" value="feedback"> Exporter tous les feedbacks internes</label></div></div><button id="export-selected-btn" class="export-btn">Lancer l'Exportation</button></div><div class="card danger-zone"><h2 class="card-title">Zone de Danger</h2><p>Cette action réinitialisera toutes les statistiques d'avis et de performance du menu.</p><button id="reset-data-btn">Réinitialiser les Données Reçues</button></div></div></div>
+                <div id="settings-tab" class="tab-content hidden"><div class="settings-grid"><div class="card" id="servers-section"><h2 class="card-title">Gérer les Serveurs</h2><ul id="servers-list" class="item-list"></ul><form id="add-server-form" class="add-form"><input type="hidden" id="editing-server-id"><input type="text" id="new-server-name" placeholder="Prénom du serveur" required><button type="submit">Ajouter Serveur</button></form></div><div class="card" id="flavors-section"><h2 class="card-title">Gérer les Plats (Saveurs)</h2><ul id="flavors-list" class="item-list"></ul><form id="add-flavor-form" class="add-form"><input type="hidden" id="editing-flavor-id"><input type="text" id="new-flavor-text" placeholder="Nom du plat" required><select id="new-flavor-category" required><option value="" disabled selected>Choisir une catégorie</option><option value="Antipasti & Crudo">Antipasti & Crudo</option><option value="Pâtes">Pâtes</option><option value="Viandes & Poissons">Viandes & Poissons</option><option value="Pizze">Pizze</option><option value="Douceurs">Douceurs</option></select><button type="submit">Ajouter Plat</button></form></div><div class="card" id="export-section"><h2 class="card-title">Exporter les Données</h2><p>Sélectionnez les données à exporter.</p><div id="export-options" style="margin: 20px 0;"><div class="export-option"><label><input type="checkbox" id="export-check-ranking" value="ranking"> Exporter le classement des serveurs</label></div><div class="export-option"><label><input type="checkbox" id="export-check-performance" value="performance"> Exporter la performance complète des plats</label></div><div class="export-option"><label><input type="checkbox" id="export-check-feedback" value="feedback"> Exporter tous les feedbacks internes</label></div></div><button id="export-selected-btn" class="export-btn">Lancer l'Exportation</button></div><div class="card danger-zone"><h2 class="card-title">Zone de Danger</h2><p>Cette action réinitialisera toutes les statistiques.</p><button id="reset-data-btn">Réinitialiser les Données Reçues</button></div></div></div>
             </main>
         </div>
     </div>
@@ -415,7 +431,7 @@
         const pageTitleEl = document.getElementById('page-title');
         const globalPeriodSelect = document.getElementById('global-period-select');
         
-        // --- LOGIQUE D'AUTHENTIFICATION (inchangée) ---
+        // --- LOGIQUE D'AUTHENTIFICATION ---
         const token = sessionStorage.getItem('jwt_token');
         if (token) {
             passwordModal.classList.add('hidden');
@@ -488,6 +504,8 @@
             const mainLayout = document.getElementById('main-layout');
             const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
             const desktopSidebarToggle = document.getElementById('sidebar-toggle');
+            const toggleText = desktopSidebarToggle.querySelector('.nav-text');
+            const toggleIcon = desktopSidebarToggle.querySelector('svg');
 
             // Version Mobile (overlay)
             mobileMenuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
@@ -499,7 +517,9 @@
             
             // Version Desktop (rétractable)
             desktopSidebarToggle.addEventListener('click', () => {
-                mainLayout.classList.toggle('layout-collapsed');
+                const isCollapsed = mainLayout.classList.toggle('layout-collapsed');
+                toggleText.textContent = isCollapsed ? 'Agrandir' : 'Réduire le menu';
+                toggleIcon.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
             });
         }
 
@@ -540,7 +560,6 @@
         }
 
         function loadDataForTab(tabName) {
-            // Le switch-case reste identique
             switch(tabName) {
                 case 'overview': loadOverviewData(); break;
                 case 'stats-serveurs': loadServerStatsData(); break;
@@ -551,7 +570,7 @@
             }
         }
 
-        // --- LOGIQUE DE CHARGEMENT & RENDU (les fonctions restent majoritairement identiques) ---
+        // --- LOGIQUE DE CHARGEMENT & RENDU ---
         async function loadOverviewData() {
             const period = globalPeriodSelect.value;
             try {
@@ -596,12 +615,7 @@
             } catch (error) { document.querySelector('#ranking-table tbody').innerHTML = `<tr><td colspan="4" style="text-align:center;">${error.message}</td></tr>`; }
         }
 
-        // Le reste des fonctions (loadMenuPerformanceData, loadQualitativeSynthesisData, etc.) reste identique au code précédent...
-        // ...
-        // Le code complet est omis pour la brièveté mais il est fonctionnellement le même que la v1.
-        // Seules les parties relatives au layout et au logo ont été modifiées.
-        // La suite du script JS est nécessaire pour la fonctionnalité complète.
-        const performanceState = { allData: [], currentSort: { column: 'selection_count', direction: 'desc' } };
+        const performanceState = { allData: [] };
         const dataForExport = { serverRanking: [], dishPerformance: [] };
         
         document.getElementById('perf-period-filter').addEventListener('change', loadMenuPerformanceData);
