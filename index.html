@@ -88,6 +88,18 @@
             font-weight: 500;
             transition: opacity 0.3s ease-in-out;
         }
+
+        /* --- STYLES POUR LA TRANSITION DES SECTIONS D'AVIS --- */
+        .review-section-container {
+            transition: opacity 0.4s ease-out, max-height 0.6s ease-in-out;
+            overflow: hidden;
+            max-height: 2000px; /* Valeur assez grande pour ne pas couper le contenu */
+            opacity: 1;
+        }
+        .review-section-container.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
         
         /* AMÉLIORATION RESPONSIVE */
         @media (max-width: 600px) {
@@ -110,7 +122,7 @@
             <button class="lang-btn" data-lang="zh">🇨🇳 ZH</button>
         </div>
         <div class="logo-container">
-            <a href="index.html">
+            <a href="/">
                 <img src="/assets/logosiena-1.png" alt="Logo Siena Paris">
             </a>
         </div>
@@ -122,7 +134,7 @@
         </p>
 
         <form id="review-form">
-            <div id="detailed-review-section">
+            <div id="detailed-review-section" class="review-section-container">
                 <div class="tag-section">
                     <h3 data-translate-key="occasion_title"></h3>
                     <div class="tag-group" data-category="reason_for_visit">
@@ -180,7 +192,7 @@
                 </div>
             </div>
 
-            <div id="quick-review-section" class="hidden">
+            <div id="quick-review-section" class="review-section-container collapsed">
                  <div class="tag-section">
                     <h3 data-translate-key="server_title"></h3>
                     <select id="server-select-express" data-category="server_name">
@@ -539,8 +551,8 @@
             
             quickReviewToggle.addEventListener('click', () => {
                 isQuickReviewMode = !isQuickReviewMode;
-                detailedReviewSection.classList.toggle('hidden', isQuickReviewMode);
-                quickReviewSection.classList.toggle('hidden', !isQuickReviewMode);
+                detailedReviewSection.classList.toggle('collapsed', isQuickReviewMode);
+                quickReviewSection.classList.toggle('collapsed', !isQuickReviewMode);
                 quickReviewToggle.dataset.translateKey = isQuickReviewMode ? 'quick_review_prompt_detailed' : 'quick_review_prompt';
                 translatePage();
             });
