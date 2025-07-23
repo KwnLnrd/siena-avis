@@ -249,19 +249,30 @@ def generate_review():
         print(f"Erreur OpenAI ou DB: {e}")
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ROUTE DU DASHBOARD (MODIFIÉE) ---
-@app.route('/dashboard')
+# --- ROUTES DU DASHBOARD ---
+
+# NOUVELLE ROUTE POUR LES STATS SERVEURS
+@app.route('/api/server-stats')
 @password_protected
-def dashboard_data():
+def server_stats():
     try:
-        # 1. Classement des serveurs
         ranking_results = db.session.query(
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
         ).group_by(GeneratedReview.server_name).order_by(desc('review_count')).all()
         ranking_data = [{"server": server, "count": count} for server, count in ranking_results]
+        return jsonify(ranking_data)
+    except Exception as e:
+        print(f"Erreur du dashboard (stats serveurs): {e}")
+        traceback.print_exc()
+        return jsonify({"error": "Impossible de charger les statistiques des serveurs."}), 500
 
-        # 2. Statistiques globales
+# ROUTE VUE D'ENSEMBLE (MODIFIÉE)
+@app.route('/dashboard')
+@password_protected
+def dashboard_data():
+    try:
+        # 1. Statistiques globales
         total_reviews = db.session.query(func.count(GeneratedReview.id)).scalar() or 0
         
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -274,9 +285,9 @@ def dashboard_data():
             if days_active > 0:
                 average_reviews_per_day = round(total_reviews / days_active, 1)
             elif total_reviews > 0:
-                average_reviews_per_day = total_reviews # Case where all reviews are from today
+                average_reviews_per_day = total_reviews
 
-        # 3. Données de tendance pour les 14 derniers jours
+        # 2. Données de tendance pour les 14 derniers jours
         trend_data_dict = {}
         today = datetime.utcnow().date()
         for i in range(14):
@@ -298,9 +309,8 @@ def dashboard_data():
         
         trend_data_list = [{"date": dt.isoformat(), "count": count} for dt, count in sorted(trend_data_dict.items())]
 
-        # 4. Combiner les résultats
+        # 3. Combiner les résultats
         final_data = {
-            "ranking": ranking_data,
             "stats": {
                 "total_reviews": total_reviews,
                 "reviews_last_30_days": reviews_last_30_days,
@@ -311,9 +321,9 @@ def dashboard_data():
         
         return jsonify(final_data)
     except Exception as e:
-        print(f"Erreur du dashboard: {e}")
+        print(f"Erreur du dashboard (vue d'ensemble): {e}")
         traceback.print_exc()
-        return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
+        return jsonify({"error": "Impossible de charger les données de la vue d'ensemble."}), 500
 
 
 # --- ENDPOINTS DE GESTION DU FEEDBACK ---
