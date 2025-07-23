@@ -51,7 +51,11 @@
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
         .card { background-color: var(--surface-color); padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px -5px rgba(133, 93, 67, .1); }
         .card-full { grid-column: 1 / -1; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .card-header .card-title { margin-bottom: 0; }
         .card-title { font-family: var(--font-serif); font-size: 1.8rem; margin-top: 0; margin-bottom: 20px; color: var(--brand-color); }
+        .export-btn { background-color: var(--surface-color); color: var(--brand-color); border: 1px solid var(--brand-color); padding: 8px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; white-space: nowrap; }
+        .export-btn:hover { background-color: var(--brand-color); color: var(--surface-color); }
         
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); }
@@ -181,7 +185,10 @@
             <div id="stats-serveurs-tab" class="tab-content hidden">
                 <div class="dashboard-grid">
                     <div class="card">
-                        <h2 class="card-title">Classement des Avis</h2>
+                        <div class="card-header">
+                            <h2 class="card-title">Classement des Avis</h2>
+                            <button id="export-ranking-btn" class="export-btn">Exporter CSV</button>
+                        </div>
                         <div style="overflow-x: auto;">
                             <table id="ranking-table">
                                 <thead><tr><th>#</th><th>Serveur</th><th style="text-align:right;">Avis</th></tr></thead>
@@ -249,7 +256,10 @@
                             <div id="flops-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
                         </div>
                         <div class="card">
-                            <h2 class="card-title">Données Complètes</h2>
+                            <div class="card-header">
+                                <h2 class="card-title">Données Complètes</h2>
+                                <button id="export-performance-btn" class="export-btn">Exporter CSV</button>
+                            </div>
                             <div id="full-data-table-container" style="overflow-x: auto; max-height: 350px;"><p>Chargement...</p></div>
                         </div>
                     </div>
@@ -316,7 +326,6 @@
     document.addEventListener('DOMContentLoaded', () => {
         const API_BASE_URL = 'https://siena-avis.onrender.com';
         let currentPassword = '';
-        let dataCache = {};
         let charts = { top3: null, top10: null, categoryPie: null, reviewsTrend: null, serviceQualities: null, atmosphere: null };
 
         const passwordModal = document.getElementById('password-modal');
@@ -335,12 +344,19 @@
         const globalPeriodFilter = document.getElementById('global-period-filter');
         const globalPeriodSelect = document.getElementById('global-period-select');
 
+        const exportRankingBtn = document.getElementById('export-ranking-btn');
+        const exportPerformanceBtn = document.getElementById('export-performance-btn');
+
+        const dataForExport = {
+            serverRanking: [],
+            dishPerformance: []
+        };
+
         const storedPassword = sessionStorage.getItem('dashboardPassword');
         if (storedPassword) {
             passwordModal.classList.add('hidden');
             mainContent.classList.remove('hidden');
             currentPassword = storedPassword;
-            // Initial load for the default active tab
             const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
             const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
             globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
@@ -353,7 +369,6 @@
             if (!currentPassword) return;
             submitBtn.disabled = true;
             submitBtn.textContent = 'Vérification...';
-            // Use an endpoint that requires auth to validate the password
             fetchWithAuth(`${API_BASE_URL}/dashboard`)
                 .then(() => {
                     sessionStorage.setItem('dashboardPassword', currentPassword);
@@ -410,11 +425,6 @@
         });
         
         function loadDataForTab(tabName) {
-            const noCacheTabs = ['overview', 'stats-serveurs', 'manage', 'feedback', 'synthese-client'];
-            if (dataCache[tabName] && !noCacheTabs.includes(tabName)) {
-                // This caching logic might need review, for now we reload the filtered tabs
-            }
-            
             switch(tabName) {
                 case 'overview': loadOverviewData(); break;
                 case 'stats-serveurs': loadServerStatsData(); break;
@@ -467,6 +477,7 @@
             const period = globalPeriodSelect.value;
             try {
                 const ranking = await fetchWithAuth(`${API_BASE_URL}/api/server-stats?period=${period}`);
+                dataForExport.serverRanking = ranking; // Store data for export
                 const rankingTableBody = document.querySelector('#ranking-table tbody');
                 rankingTableBody.innerHTML = ranking.length ? ranking.map((item, index) => `<tr><td>${index + 1}</td><td>${item.server}</td><td style="text-align:right;">${item.count}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;">Aucun avis pour cette période.</td></tr>';
                 
@@ -592,6 +603,7 @@
                 const comparison = typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
                 return performanceState.currentSort.direction === 'asc' ? comparison : -comparison;
             });
+            dataForExport.dishPerformance = sortedData; // Store data for export
             let tableHTML = '<table><thead><tr><th data-sort="dish_name">Plat</th><th data-sort="dish_category">Catégorie</th><th data-sort="selection_count">Sélections</th></tr></thead><tbody>';
             tableHTML += sortedData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
             tableContainer.innerHTML = tableHTML + '</tbody></table>';
@@ -804,7 +816,8 @@
             try {
                 await fetchWithAuth(`${API_BASE_URL}/api/reset-data`, { method: 'POST' });
                 alert('Données réinitialisées avec succès.');
-                dataCache = {}; 
+                dataForExport.serverRanking = [];
+                dataForExport.dishPerformance = [];
                 loadDataForTab('overview');
                 loadDataForTab('stats-serveurs');
                 loadDataForTab('performance');
@@ -814,6 +827,63 @@
             } finally {
                 confirmResetModal.classList.add('hidden');
             }
+        });
+
+        // --- Fonctions d'export CSV ---
+        function downloadCSV(data, filename = 'export.csv') {
+            if (!data || data.length === 0) {
+                alert("Aucune donnée à exporter.");
+                return;
+            }
+            const headers = Object.keys(data[0]);
+            const csvRows = [
+                headers.join(','),
+                ...data.map(row =>
+                    headers.map(fieldName => {
+                        let field = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];
+                        let fieldString = field.toString();
+                        if (fieldString.includes('"')) {
+                            fieldString = fieldString.replace(/"/g, '""');
+                        }
+                        if (fieldString.includes(',')) {
+                            fieldString = `"${fieldString}"`;
+                        }
+                        return fieldString;
+                    }).join(',')
+                )
+            ];
+
+            const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        exportRankingBtn.addEventListener('click', () => {
+            const formattedData = dataForExport.serverRanking.map((item, index) => ({
+                '#': index + 1,
+                'Serveur': item.server,
+                'Avis': item.count
+            }));
+            const date = new Date().toLocaleDateString('fr-CA');
+            downloadCSV(formattedData, `classement-serveurs-${date}.csv`);
+        });
+
+        exportPerformanceBtn.addEventListener('click', () => {
+            const formattedData = dataForExport.dishPerformance.map(item => ({
+                'Plat': item.dish_name,
+                'Catégorie': item.dish_category,
+                'Sélections': item.selection_count
+            }));
+            const date = new Date().toLocaleDateString('fr-CA');
+            downloadCSV(formattedData, `performance-plats-${date}.csv`);
         });
     });
     </script>
