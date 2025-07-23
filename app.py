@@ -1,4 +1,5 @@
 import os
+import traceback
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from openai import OpenAI
@@ -248,31 +249,70 @@ def generate_review():
         print(f"Erreur OpenAI ou DB: {e}")
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ROUTES DU DASHBOARD (MODIFIÉE) ---
+# --- ROUTE DU DASHBOARD (MODIFIÉE) ---
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
     try:
-        # 1. Obtenir le classement des serveurs (inchangé)
+        # 1. Classement des serveurs
         ranking_results = db.session.query(
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
-        ).group_by(GeneratedReview.server_name).order_by(func.count(GeneratedReview.id).desc()).all()
+        ).group_by(GeneratedReview.server_name).order_by(desc('review_count')).all()
         ranking_data = [{"server": server, "count": count} for server, count in ranking_results]
 
-        # 2. Obtenir l'historique de tous les avis
-        history_results = db.session.query(GeneratedReview.created_at).order_by(GeneratedReview.created_at.asc()).all()
-        history_data = [{"created_at": review.created_at.isoformat()} for review in history_results]
+        # 2. Statistiques globales
+        total_reviews = db.session.query(func.count(GeneratedReview.id)).scalar() or 0
+        
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        reviews_last_30_days = db.session.query(func.count(GeneratedReview.id)).filter(GeneratedReview.created_at >= thirty_days_ago).scalar() or 0
+        
+        first_review_date = db.session.query(func.min(GeneratedReview.created_at)).scalar()
+        average_reviews_per_day = 0.0
+        if first_review_date:
+            days_active = (datetime.utcnow().date() - first_review_date.date()).days
+            if days_active > 0:
+                average_reviews_per_day = round(total_reviews / days_active, 1)
+            elif total_reviews > 0:
+                average_reviews_per_day = total_reviews # Case where all reviews are from today
 
-        # 3. Combiner les résultats dans un seul objet JSON
+        # 3. Données de tendance pour les 14 derniers jours
+        trend_data_dict = {}
+        today = datetime.utcnow().date()
+        for i in range(14):
+            date = today - timedelta(days=i)
+            trend_data_dict[date] = 0
+
+        fourteen_days_ago = today - timedelta(days=13)
+        
+        trend_results = db.session.query(
+            func.date(GeneratedReview.created_at).label('review_date'),
+            func.count(GeneratedReview.id)
+        ).filter(
+            func.date(GeneratedReview.created_at) >= fourteen_days_ago
+        ).group_by('review_date').all()
+
+        for date, count in trend_results:
+            if date in trend_data_dict:
+                trend_data_dict[date] = count
+        
+        trend_data_list = [{"date": dt.isoformat(), "count": count} for dt, count in sorted(trend_data_dict.items())]
+
+        # 4. Combiner les résultats
         final_data = {
             "ranking": ranking_data,
-            "history": history_data
+            "stats": {
+                "total_reviews": total_reviews,
+                "reviews_last_30_days": reviews_last_30_days,
+                "average_reviews_per_day": average_reviews_per_day,
+            },
+            "trend": trend_data_list
         }
         
         return jsonify(final_data)
     except Exception as e:
         print(f"Erreur du dashboard: {e}")
+        traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données du dashboard."}), 500
 
 
@@ -338,15 +378,17 @@ def menu_performance_data():
             func.count(MenuSelection.id).label('selection_count')
         )
         if period == '7days':
-            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'7 days'::interval")))
+            query = query.filter(MenuSelection.selection_timestamp >= (datetime.utcnow() - timedelta(days=7)))
         elif period == '30days':
-            query = query.filter(MenuSelection.selection_timestamp >= (func.now() - text("'30 days'::interval")))
+            query = query.filter(MenuSelection.selection_timestamp >= (datetime.utcnow() - timedelta(days=30)))
+        
         results = query.group_by(
             MenuSelection.dish_name,
             MenuSelection.dish_category
         ).order_by(
-            func.count(MenuSelection.id).desc()
+            desc('selection_count')
         ).all()
+
         data = [{
             "dish_name": name,
             "dish_category": category,
@@ -355,6 +397,7 @@ def menu_performance_data():
         return jsonify(data)
     except Exception as e:
         print(f"Erreur performance menu: {e}")
+        traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données de performance."}), 500
 
 # --- NOUVELLE ROUTE POUR RÉINITIALISER LES DONNÉES ---
@@ -363,15 +406,14 @@ def menu_performance_data():
 def reset_data():
     try:
         # Utilise TRUNCATE pour vider les tables et réinitialiser les compteurs
-        db.session.execute(text('TRUNCATE TABLE generated_review RESTART IDENTITY CASCADE;'))
-        db.session.execute(text('TRUNCATE TABLE menu_selections RESTART IDENTITY CASCADE;'))
+        db.session.execute(text('TRUNCATE TABLE generated_review, menu_selections, internal_feedback RESTART IDENTITY CASCADE;'))
         db.session.commit()
-        return jsonify({"success": True, "message": "Les données d'avis et de performance ont été réinitialisées."})
+        return jsonify({"success": True, "message": "Toutes les données de performance et d'avis ont été réinitialisées."})
     except Exception as e:
         db.session.rollback()
-        print(f"Erreur lors de la réinitialisation des données : {e}")
+        print(f"Erreur lors de la réinitialisation des données: {e}")
+        traceback.print_exc()
         return jsonify({"error": "Une erreur est survenue lors de la réinitialisation."}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)

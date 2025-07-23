@@ -625,43 +625,4 @@
 
                     resultArea.classList.remove('hidden');
                     if (result.review) {
-                        reviewText.value = result.review;
-                        reviewText.style.height = 'auto';
-                        reviewText.style.height = (reviewText.scrollHeight) + 'px';
-                        thankYouMessage.innerHTML = `<h4>${getTranslation('thank_you_title')}</h4><p>${getTranslation('thank_you_instructions')}</p>`;
-                        thankYouMessage.classList.remove('hidden');
-                    } else {
-                        thankYouMessage.innerHTML = `<h4>${getTranslation('thank_you_title')}</h4>`;
-                        thankYouMessage.classList.remove('hidden');
-                        document.getElementById('copy-btn').classList.add('hidden');
-                        document.getElementById('google-btn').classList.add('hidden');
-                        reviewText.classList.add('hidden');
-                    }
-
-                } catch (error) {
-                    clearInterval(loadingInterval);
-                    loader.classList.add('hidden');
-                    form.classList.remove('hidden');
-                    showNotification('Erreur de connexion au serveur.');
-                    console.error('Fetch error:', error);
-                }
-            });
-
-            copyBtn.addEventListener('click', () => {
-                reviewText.select();
-                document.execCommand('copy');
-                showNotification('Texte copié !');
-            });
-
-            // --- Initialisation de la page ---
-            document.getElementById('copyright-year').textContent = new Date().getFullYear();
-            initializeCheckboxGroup('service_qualities');
-            initializeCheckboxGroup('quick_highlight');
-            populateAtmospheres();
-            
-            const initialLang = window.location.hash.substring(1) || 'fr';
-            switchLanguage(initialLang);
-        });
-    </script>
-</body>
-</ht
+                        re
