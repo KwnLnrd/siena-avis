@@ -46,7 +46,7 @@
         .nav-tab:hover { color: var(--text-primary); }
         .nav-tab.active { color: var(--brand-color); border-bottom-color: var(--brand-color); }
 
-        /* --- Contenu --- */
+        /* --- Contenu (styles inchangés) --- */
         .tab-content { animation: fadeIn .5s ease-out; }
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; }
         .card { background-color: var(--surface-color); padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px -5px rgba(133, 93, 67, .1); }
@@ -65,7 +65,6 @@
 
         .chart-container { position: relative; height: 350px; width: 100%; }
 
-        /* --- Feedback --- */
         .feedback-list { display: grid; gap: 20px; }
         .feedback-card { background-color: var(--surface-color); border: 1px solid var(--border-color); border-left-width: 5px; border-radius: 8px; padding: 20px; }
         .feedback-card[data-status="new"] { border-left-color: #1565C0; }
@@ -74,7 +73,6 @@
         .feedback-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 0.9rem; flex-wrap: wrap; gap: 10px;}
         .feedback-actions button { border: 1px solid var(--border-color); background-color: #fff; color: var(--text-primary); padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 500; }
 
-        /* --- Gestion & Export --- */
         .item-list { list-style: none; padding: 0; margin: 0; }
         .item-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px 5px; border-bottom: 1px solid var(--border-color); gap: 10px; }
         .item-list li span { flex-grow: 1; word-break: break-word; }
@@ -93,7 +91,6 @@
         .export-option input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--brand-color); }
         .export-option label { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; cursor: pointer; }
 
-        /* --- AMÉLIORATIONS RESPONSIVES --- */
         @media (max-width: 768px) {
             body { padding: 10px; }
             .header { flex-direction: column; align-items: flex-start; gap: 20px; }
@@ -351,9 +348,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const API_BASE_URL = 'https://siena-avis.onrender.com';
-        let currentPassword = '';
+        // Le mot de passe n'est plus stocké globalement. Le token JWT le remplace.
         let charts = { top3: null, top10: null, categoryPie: null, reviewsTrend: null, serviceQualities: null, atmosphere: null };
 
+        // --- SÉLECTEURS DOM (inchangés pour la plupart) ---
         const passwordModal = document.getElementById('password-modal');
         const passwordForm = document.getElementById('password-form');
         const passwordInput = document.getElementById('password-input');
@@ -366,10 +364,8 @@
         const confirmResetModal = document.getElementById('confirm-reset-modal');
         const cancelResetBtn = document.getElementById('cancel-reset-btn');
         const confirmResetBtn = document.getElementById('confirm-reset-btn');
-
         const globalPeriodFilter = document.getElementById('global-period-filter');
         const globalPeriodSelect = document.getElementById('global-period-select');
-
         const exportSelectedBtn = document.getElementById('export-selected-btn');
         const exportCheckRanking = document.getElementById('export-check-ranking');
         const exportCheckPerformance = document.getElementById('export-check-performance');
@@ -380,57 +376,110 @@
             dishPerformance: []
         };
 
-        const storedPassword = sessionStorage.getItem('dashboardPassword');
-        if (storedPassword) {
+        // --- NOUVELLE LOGIQUE D'AUTHENTIFICATION ---
+
+        // Vérifie si un token existe déjà dans sessionStorage
+        const token = sessionStorage.getItem('jwt_token');
+        if (token) {
+            // Si un token existe, on suppose que l'utilisateur est connecté
             passwordModal.classList.add('hidden');
             mainContent.classList.remove('hidden');
-            currentPassword = storedPassword;
             const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
             const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
             globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
             loadDataForTab(activeTabName);
         }
 
-        passwordForm.addEventListener('submit', (e) => {
+        // Écouteur pour le formulaire de connexion
+        passwordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            currentPassword = passwordInput.value;
-            if (!currentPassword) return;
+            const password = passwordInput.value;
+            if (!password) return;
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Vérification...';
-            fetchWithAuth(`${API_BASE_URL}/dashboard`)
-                .then(() => {
-                    sessionStorage.setItem('dashboardPassword', currentPassword);
-                    passwordModal.classList.add('hidden');
-                    mainContent.classList.remove('hidden');
-                    const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
-                    const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
-                    globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
-                    loadDataForTab(activeTabName);
-                })
-                .catch(error => { passwordError.textContent = error.message; })
-                .finally(() => {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Valider';
+            passwordError.textContent = '';
+
+            try {
+                // Envoi de la requête de login au nouvel endpoint /api/login
+                const response = await fetch(`${API_BASE_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: password })
                 });
+
+                if (!response.ok) {
+                    throw new Error("Mot de passe incorrect.");
+                }
+
+                const data = await response.json();
+                
+                // Stockage du token dans sessionStorage
+                sessionStorage.setItem('jwt_token', data.access_token);
+
+                // Affichage du contenu principal
+                passwordModal.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                const activeTabName = document.querySelector('.nav-tab.active').dataset.tab;
+                const showGlobalFilter = ['overview', 'stats-serveurs'].includes(activeTabName);
+                globalPeriodFilter.classList.toggle('hidden', !showGlobalFilter);
+                loadDataForTab(activeTabName);
+
+            } catch (error) {
+                passwordError.textContent = error.message;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Valider';
+            }
         });
 
+        // --- MISE À JOUR DE fetchWithAuth ---
         async function fetchWithAuth(url, options = {}) {
-            const headers = { ...options.headers, 'Authorization': 'Basic ' + btoa('admin:' + currentPassword) };
+            // Récupération du token depuis sessionStorage
+            const token = sessionStorage.getItem('jwt_token');
+            if (!token) {
+                // Si pas de token, on déconnecte l'utilisateur
+                logout();
+                throw new Error("Session expirée. Veuillez vous reconnecter.");
+            }
+
+            // Ajout de l'en-tête d'autorisation "Bearer"
+            const headers = { 
+                ...options.headers, 
+                'Authorization': 'Bearer ' + token 
+            };
+
             if (options.body && typeof options.body !== 'string') {
                 headers['Content-Type'] = 'application/json';
                 options.body = JSON.stringify(options.body);
             }
+
             const response = await fetch(url, { ...options, headers });
-            if (response.status === 401) {
-                sessionStorage.removeItem('dashboardPassword');
-                window.location.reload();
-                throw new Error("Mot de passe incorrect ou session expirée.");
+
+            // Si le token est invalide ou expiré (erreur 401 ou 422), on déconnecte
+            if (response.status === 401 || response.status === 422) {
+                logout();
+                throw new Error("Session expirée. Veuillez vous reconnecter.");
             }
-            if (!response.ok) throw new Error(`Erreur du serveur (status ${response.status})`);
+
+            if (!response.ok) {
+                throw new Error(`Erreur du serveur (status ${response.status})`);
+            }
+            
             const contentType = response.headers.get("content-type");
             return contentType?.includes("application/json") ? response.json() : response.text();
         }
 
+        // Fonction de déconnexion
+        function logout() {
+            sessionStorage.removeItem('jwt_token'); // Supprime le token
+            mainContent.classList.add('hidden');
+            passwordModal.classList.remove('hidden');
+            passwordInput.value = '';
+            passwordError.textContent = 'Votre session a expiré.';
+        }
+
+        // --- LOGIQUE DES ONGLETS ET CHARGEMENT DES DONNÉES (inchangée) ---
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 tabs.forEach(t => t.classList.remove('active'));
@@ -453,6 +502,7 @@
         });
         
         function loadDataForTab(tabName) {
+            // Les fonctions de chargement appellent maintenant la nouvelle version de fetchWithAuth
             switch(tabName) {
                 case 'overview': loadOverviewData(); break;
                 case 'stats-serveurs': loadServerStatsData(); break;
@@ -463,6 +513,10 @@
                 case 'export': /* No data to load initially */ break;
             }
         }
+        
+        // --- TOUTES LES AUTRES FONCTIONS (loadOverviewData, loadServerStatsData, etc.) RESTENT IDENTIQUES ---
+        // Elles utiliseront automatiquement la nouvelle fonction fetchWithAuth qui gère le token JWT.
+        // (Le code de ces fonctions est omis ici pour la clarté, mais il est identique à l'original)
 
         async function loadOverviewData() {
             const period = globalPeriodSelect.value;
@@ -497,8 +551,7 @@
                 });
             } catch (error) { 
                 console.error("Erreur chargement Overview:", error);
-                document.getElementById('reviews-period-stat').textContent = 'Erreur';
-                document.getElementById('avg-reviews-stat').textContent = 'Erreur';
+                // La fonction logout est appelée par fetchWithAuth en cas d'erreur 401/422
              }
         }
 
@@ -506,7 +559,7 @@
             const period = globalPeriodSelect.value;
             try {
                 const ranking = await fetchWithAuth(`${API_BASE_URL}/api/server-stats?period=${period}`);
-                dataForExport.serverRanking = ranking; // Store data for export
+                dataForExport.serverRanking = ranking;
                 const rankingTableBody = document.querySelector('#ranking-table tbody');
                 rankingTableBody.innerHTML = ranking.length ? ranking.map((item, index) => `<tr><td>${index + 1}</td><td>${item.server}</td><td style="text-align:right;">${item.count}</td></tr>`).join('') : '<tr><td colspan="3" style="text-align:center;">Aucun avis pour cette période.</td></tr>';
                 
@@ -632,7 +685,7 @@
                 const comparison = typeof aVal === 'string' ? aVal.localeCompare(bVal) : aVal - bVal;
                 return performanceState.currentSort.direction === 'asc' ? comparison : -comparison;
             });
-            dataForExport.dishPerformance = sortedData; // Store data for export
+            dataForExport.dishPerformance = sortedData;
             let tableHTML = '<table><thead><tr><th data-sort="dish_name">Plat</th><th data-sort="dish_category">Catégorie</th><th data-sort="selection_count">Sélections</th></tr></thead><tbody>';
             tableHTML += sortedData.map(item => `<tr><td>${item.dish_name}</td><td>${item.dish_category}</td><td>${item.selection_count}</td></tr>`).join('');
             tableContainer.innerHTML = tableHTML + '</tbody></table>';
@@ -858,7 +911,6 @@
             }
         });
 
-        // --- Fonctions d'export CSV ---
         function downloadCSV(data, filename = 'export.csv') {
             if (!data || data.length === 0) {
                 alert("Aucune donnée à exporter.");
@@ -866,7 +918,7 @@
             }
             const headers = Object.keys(data[0]);
             const csvRows = [
-                '\uFEFF' + headers.join(','), // Add BOM for UTF-8 Excel compatibility
+                '\uFEFF' + headers.join(','), 
                 ...data.map(row =>
                     headers.map(fieldName => {
                         let field = row[fieldName] === null || row[fieldName] === undefined ? '' : row[fieldName];

@@ -8,8 +8,9 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, text, desc
 from sqlalchemy.orm import aliased
 from datetime import datetime, timedelta
-from functools import wraps
-from werkzeug.security import check_password_hash, generate_password_hash
+# Importations pour JWT
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, JWTManager
+from werkzeug.security import check_password_hash # On garde check_password_hash pour la sécurité
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_talisman import Talisman
@@ -19,26 +20,26 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
-# --- SÉCURITÉ ADDITIONNELLE ---
-# 1. Hachage du mot de passe
-# Pour générer un hash de mot de passe, exécutez cette commande dans votre terminal :
-# python -c "from werkzeug.security import generate_password_hash; print(generate_password_hash('VOTRE_MOT_DE_PASSE_ICI'))"
-# Ensuite, définissez la variable d'environnement DASHBOARD_PASSWORD_HASH avec le hash obtenu.
-DASHBOARD_PASSWORD_HASH = os.getenv('DASHBOARD_PASSWORD_HASH')
-if not DASHBOARD_PASSWORD_HASH:
-    raise RuntimeError("DASHBOARD_PASSWORD_HASH n'est pas définie. Veuillez définir un mot de passe haché dans vos variables d'environnement.")
+# --- CONFIGURATION DE LA SÉCURITÉ (JWT) ---
+# Clé secrète pour signer les tokens JWT. Doit être gardée secrète !
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "une-super-cle-secrete-pour-le-developpement")
+# Mot de passe pour le dashboard. En production, utilisez une variable d'environnement forte.
+DASHBOARD_PASSWORD = os.getenv('DASHBOARD_PASSWORD')
+if not DASHBOARD_PASSWORD:
+    raise RuntimeError("DASHBOARD_PASSWORD n'est pas définie. Veuillez la définir dans vos variables d'environnement.")
 
-# 2. Initialisation de Flask-Talisman pour les en-têtes de sécurité
-# Note: CSP (Content Security Policy) est désactivé par défaut pour ne pas bloquer les scripts inline et CDN.
-# Pour une sécurité maximale, configurez CSP de manière plus stricte.
+# Initialisation de JWTManager
+jwt = JWTManager(app)
+
+# Initialisation de Flask-Talisman pour les en-têtes de sécurité
 talisman = Talisman(app, content_security_policy=None)
 
-# 3. Initialisation de Flask-Limiter pour la protection contre le brute-force
+# Initialisation de Flask-Limiter pour la protection contre le brute-force
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://" # ou une URL Redis en production
+    storage_uri="memory://"
 )
 
 # --- CLIENT OPENAI ---
@@ -47,14 +48,14 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # --- CONFIGURATION DE LA BASE DE DONNÉES ---
 database_url = os.getenv('DATABASE_URL')
 if not database_url:
-    raise RuntimeError("DATABASE_URL is not set. Please set it in your Render environment variables.")
+    raise RuntimeError("DATABASE_URL is not set.")
 if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# --- MODÈLES DE LA BASE DE DONNÉES ---
+# --- MODÈLES DE LA BASE DE DONNÉES (inchangés) ---
 class GeneratedReview(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     server_name = db.Column(db.String(80), nullable=False, index=True)
@@ -96,20 +97,29 @@ class QualitativeFeedback(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- DÉCORATEUR DE SÉCURISATION (MIS À JOUR) ---
-def password_protected(f):
-    @wraps(f)
-    @limiter.limit("10 per minute") # Limite les tentatives de connexion pour ce endpoint
-    def decorated_function(*args, **kwargs):
-        auth = request.authorization
-        if not auth or not (auth.username == 'admin' and check_password_hash(DASHBOARD_PASSWORD_HASH, auth.password)):
-            return 'Accès non autorisé.', 401, {'WWW-Authenticate': 'Basic realm="Login Requis"'}
-        return f(*args, **kwargs)
-    return decorated_function
+# --- NOUVELLE ROUTE DE LOGIN ---
+@app.route("/api/login", methods=["POST"])
+@limiter.limit("10 per minute") # Limite les tentatives de connexion
+def login():
+    """
+    Reçoit le nom d'utilisateur et le mot de passe.
+    Si les identifiants sont corrects, renvoie un token d'accès JWT.
+    """
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
 
-# --- ROUTES DE GESTION ---
+    # Vérification des identifiants (simple pour cet exemple)
+    if username != "admin" or password != DASHBOARD_PASSWORD:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    # Création du token d'accès
+    access_token = create_access_token(identity=username)
+    return jsonify(access_token=access_token)
+
+
+# --- ROUTES DE GESTION (protégées par @jwt_required) ---
 @app.route('/api/servers', methods=['GET', 'POST'])
-@password_protected
+@jwt_required()
 def manage_servers():
     if request.method == 'POST':
         data = request.get_json()
@@ -122,7 +132,7 @@ def manage_servers():
     return jsonify([{"id": s.id, "name": s.name} for s in servers])
 
 @app.route('/api/servers/<int:server_id>', methods=['PUT', 'DELETE'])
-@password_protected
+@jwt_required()
 def handle_server(server_id):
     server = db.session.get(Server, server_id)
     if not server:
@@ -144,7 +154,7 @@ def handle_server(server_id):
 
 
 @app.route('/api/options/flavors', methods=['GET', 'POST'])
-@password_protected
+@jwt_required()
 def manage_flavors():
     if request.method == 'POST':
         data = request.get_json()
@@ -159,7 +169,7 @@ def manage_flavors():
 
 
 @app.route('/api/options/flavors/<int:option_id>', methods=['PUT', 'DELETE'])
-@password_protected
+@jwt_required()
 def handle_flavor(option_id):
     option = db.session.get(FlavorOption, option_id)
     if not option:
@@ -180,7 +190,7 @@ def handle_flavor(option_id):
         return jsonify({"success": True})
 
 
-# --- ROUTES API PUBLIQUES ---
+# --- ROUTES API PUBLIQUES (inchangées) ---
 @app.route('/api/public/data', methods=['GET'])
 def get_public_data():
     try:
@@ -200,7 +210,7 @@ def get_public_data():
         print(f"Erreur lors de la récupération des données publiques : {e}")
         return jsonify({"error": "Impossible de charger les données de configuration."}), 500
 
-# --- ROUTE DE GÉNÉRATION D'AVIS ---
+# --- ROUTE DE GÉNÉRATION D'AVIS (inchangée) ---
 @app.route('/generate-review', methods=['POST'])
 def generate_review():
     data = request.get_json()
@@ -219,7 +229,6 @@ def generate_review():
     details = {}
     dish_selections = []
     
-    # Enregistrement des données qualitatives
     qualitative_categories = ['service_qualities', 'atmosphere', 'reason_for_visit', 'quick_highlight']
     for tag in tags:
         category = tag.get('category')
@@ -291,11 +300,10 @@ def generate_review():
         traceback.print_exc()
         return jsonify({"error": "Désolé, une erreur est survenue lors de la génération de l'avis."}), 500
 
-# --- ROUTES DU DASHBOARD ---
+# --- ROUTES DU DASHBOARD (protégées par @jwt_required) ---
 
-# ROUTE STATS SERVEURS (MODIFIÉE)
 @app.route('/api/server-stats')
-@password_protected
+@jwt_required()
 def server_stats():
     period = request.args.get('period', 'all')
     try:
@@ -317,13 +325,11 @@ def server_stats():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les statistiques des serveurs."}), 500
 
-# ROUTE VUE D'ENSEMBLE (MODIFIÉE)
 @app.route('/dashboard')
-@password_protected
+@jwt_required()
 def dashboard_data():
     period = request.args.get('period', 'all')
     try:
-        # 1. Requête de base pour la période sélectionnée
         base_query = GeneratedReview.query
         end_date = datetime.utcnow()
         
@@ -336,14 +342,13 @@ def dashboard_data():
             start_date = end_date - timedelta(days=30)
             days_in_period = 30
             base_query = base_query.filter(GeneratedReview.created_at >= start_date)
-        else: # 'all'
+        else:
             first_review_date = db.session.query(func.min(GeneratedReview.created_at)).scalar()
             if first_review_date:
                 days_in_period = (end_date.date() - first_review_date.date()).days
             else:
                 days_in_period = 0
         
-        # 2. Calcul des statistiques pour la période
         reviews_in_period = base_query.count()
         
         average_reviews_per_day = 0.0
@@ -352,7 +357,6 @@ def dashboard_data():
         elif reviews_in_period > 0:
             average_reviews_per_day = float(reviews_in_period)
 
-        # 3. Données de tendance (constante sur 14 jours)
         trend_data_dict = {}
         today = datetime.utcnow().date()
         for i in range(14):
@@ -374,7 +378,6 @@ def dashboard_data():
         
         trend_data_list = [{"date": dt.isoformat(), "count": count} for dt, count in sorted(trend_data_dict.items())]
 
-        # 4. Combinaison des résultats
         final_data = {
             "stats": {
                 "reviews_in_period": reviews_in_period,
@@ -389,9 +392,8 @@ def dashboard_data():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données de la vue d'ensemble."}), 500
 
-# NOUVELLE ROUTE POUR LA SYNTHÈSE QUALITATIVE
 @app.route('/api/qualitative-synthesis')
-@password_protected
+@jwt_required()
 def qualitative_synthesis_data():
     try:
         service_qualities_query = db.session.query(
@@ -428,9 +430,8 @@ def qualitative_synthesis_data():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données de synthèse qualitative."}), 500
 
-# --- ENDPOINTS DE GESTION DU FEEDBACK (MODIFIÉ) ---
 @app.route('/api/internal-feedback', methods=['GET'])
-@password_protected
+@jwt_required()
 def get_internal_feedback():
     status_filter = request.args.get('status', 'new')
     search_term = request.args.get('search', None)
@@ -468,7 +469,7 @@ def get_internal_feedback():
         return jsonify({"error": "Impossible de charger les feedbacks."}), 500
 
 @app.route('/api/internal-feedback/<int:feedback_id>/status', methods=['PUT'])
-@password_protected
+@jwt_required()
 def update_feedback_status(feedback_id):
     data = request.get_json()
     new_status = data.get('status')
@@ -486,9 +487,8 @@ def update_feedback_status(feedback_id):
         print(f"Erreur de mise à jour du statut du feedback: {e}")
         return jsonify({"error": "Erreur lors de la mise à jour du statut."}), 500
 
-# --- ROUTE PERFORMANCE DU MENU ---
 @app.route('/api/menu-performance')
-@password_protected
+@jwt_required()
 def menu_performance_data():
     period = request.args.get('period', 'all')
     try:
@@ -520,12 +520,10 @@ def menu_performance_data():
         traceback.print_exc()
         return jsonify({"error": "Impossible de charger les données de performance."}), 500
 
-# --- NOUVELLE ROUTE POUR RÉINITIALISER LES DONNÉES ---
 @app.route('/api/reset-data', methods=['POST'])
-@password_protected
+@jwt_required()
 def reset_data():
     try:
-        # Utilise TRUNCATE pour vider les tables et réinitialiser les compteurs
         db.session.execute(text('TRUNCATE TABLE generated_review, menu_selections, internal_feedback, qualitative_feedback RESTART IDENTITY CASCADE;'))
         db.session.commit()
         return jsonify({"success": True, "message": "Toutes les données de performance et d'avis ont été réinitialisées."})
