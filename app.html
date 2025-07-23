@@ -175,6 +175,7 @@
                     <p style="font-size: 0.9rem; margin-top: -10px; margin-bottom: 20px;" data-translate-key="atmosphere_subtitle"></p>
                     <p class="limit-notification hidden"></p>
                     <div class="tag-group" data-category="atmosphere" id="atmospheres-content">
+                        <!-- Le contenu sera généré par JavaScript -->
                     </div>
                 </div>
             </div>
@@ -451,6 +452,31 @@
                 updateLimitState();
             };
 
+            const populateAtmospheres = () => {
+                const atmosphereOptions = [
+                    { key: 'atmosphere_decoration', value: 'Decoration' },
+                    { key: 'atmosphere_music', value: 'Live Music' },
+                    { key: 'atmosphere_energy', value: 'Festive Energy' },
+                    { key: 'atmosphere_lighting', value: 'Intimate Lighting' },
+                    { key: 'atmosphere_comfort', value: 'Comfort' },
+                    { key: 'atmosphere_photo', value: 'Ideal for photos' }
+                ];
+
+                const atmospheresContent = document.getElementById('atmospheres-content');
+                if (!atmospheresContent) return;
+
+                atmospheresContent.innerHTML = '';
+                atmosphereOptions.forEach(opt => {
+                    const id = opt.key.replace(/_/g, '-');
+                    atmospheresContent.innerHTML += `
+                        <input type="checkbox" id="${id}" value="${opt.value}">
+                        <label for="${id}" data-translate-key="${opt.key}"></label>
+                    `;
+                });
+                
+                initializeCheckboxGroup('atmosphere');
+            };
+
             async function fetchPublicData() {
                 try {
                     const response = await fetch('https://siena-avis.onrender.com/api/public/data');
@@ -479,15 +505,7 @@
                         }
                     }
                     
-                    const atmospheres = flavors['Ambiance'] || [];
-                    const atmospheresContent = document.getElementById('atmospheres-content');
-                    atmospheresContent.innerHTML = '';
-                    atmospheres.forEach(atmosphere => {
-                        atmospheresContent.innerHTML += `<input type="checkbox" id="atm_${atmosphere.id}" value="${atmosphere.text}"><label for="atm_${atmosphere.id}">${atmosphere.text}</label>`;
-                    });
-
                     initializeCheckboxGroup('dish');
-                    initializeCheckboxGroup('atmosphere');
 
                 } catch (error) {
                     console.error('Failed to fetch public data:', error);
@@ -603,6 +621,8 @@
 
             initializeCheckboxGroup('service_qualities');
             initializeCheckboxGroup('quick_highlight');
+            
+            populateAtmospheres();
             
             const initialLang = window.location.hash.substring(1) || 'fr';
             switchLanguage(initialLang);
