@@ -251,15 +251,23 @@ def generate_review():
 
 # --- ROUTES DU DASHBOARD ---
 
-# NOUVELLE ROUTE POUR LES STATS SERVEURS
+# ROUTE STATS SERVEURS (MODIFIÉE)
 @app.route('/api/server-stats')
 @password_protected
 def server_stats():
+    period = request.args.get('period', 'all')
     try:
-        ranking_results = db.session.query(
+        query = db.session.query(
             GeneratedReview.server_name, 
             func.count(GeneratedReview.id).label('review_count')
-        ).group_by(GeneratedReview.server_name).order_by(desc('review_count')).all()
+        )
+
+        if period == '7days':
+            query = query.filter(GeneratedReview.created_at >= (datetime.utcnow() - timedelta(days=7)))
+        elif period == '30days':
+            query = query.filter(GeneratedReview.created_at >= (datetime.utcnow() - timedelta(days=30)))
+
+        ranking_results = query.group_by(GeneratedReview.server_name).order_by(desc('review_count')).all()
         ranking_data = [{"server": server, "count": count} for server, count in ranking_results]
         return jsonify(ranking_data)
     except Exception as e:
@@ -271,23 +279,38 @@ def server_stats():
 @app.route('/dashboard')
 @password_protected
 def dashboard_data():
+    period = request.args.get('period', 'all')
     try:
-        # 1. Statistiques globales
-        total_reviews = db.session.query(func.count(GeneratedReview.id)).scalar() or 0
+        # 1. Requête de base pour la période sélectionnée
+        base_query = GeneratedReview.query
+        end_date = datetime.utcnow()
         
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-        reviews_last_30_days = db.session.query(func.count(GeneratedReview.id)).filter(GeneratedReview.created_at >= thirty_days_ago).scalar() or 0
+        days_in_period = 0
+        if period == '7days':
+            start_date = end_date - timedelta(days=7)
+            days_in_period = 7
+            base_query = base_query.filter(GeneratedReview.created_at >= start_date)
+        elif period == '30days':
+            start_date = end_date - timedelta(days=30)
+            days_in_period = 30
+            base_query = base_query.filter(GeneratedReview.created_at >= start_date)
+        else: # 'all'
+            first_review_date = db.session.query(func.min(GeneratedReview.created_at)).scalar()
+            if first_review_date:
+                days_in_period = (end_date.date() - first_review_date.date()).days
+            else:
+                days_in_period = 0
         
-        first_review_date = db.session.query(func.min(GeneratedReview.created_at)).scalar()
+        # 2. Calcul des statistiques pour la période
+        reviews_in_period = base_query.count()
+        
         average_reviews_per_day = 0.0
-        if first_review_date:
-            days_active = (datetime.utcnow().date() - first_review_date.date()).days
-            if days_active > 0:
-                average_reviews_per_day = round(total_reviews / days_active, 1)
-            elif total_reviews > 0:
-                average_reviews_per_day = total_reviews
+        if days_in_period > 0:
+            average_reviews_per_day = round(reviews_in_period / days_in_period, 1)
+        elif reviews_in_period > 0:
+            average_reviews_per_day = float(reviews_in_period)
 
-        # 2. Données de tendance pour les 14 derniers jours
+        # 3. Données de tendance (constante sur 14 jours)
         trend_data_dict = {}
         today = datetime.utcnow().date()
         for i in range(14):
@@ -309,11 +332,10 @@ def dashboard_data():
         
         trend_data_list = [{"date": dt.isoformat(), "count": count} for dt, count in sorted(trend_data_dict.items())]
 
-        # 3. Combiner les résultats
+        # 4. Combinaison des résultats
         final_data = {
             "stats": {
-                "total_reviews": total_reviews,
-                "reviews_last_30_days": reviews_last_30_days,
+                "reviews_in_period": reviews_in_period,
                 "average_reviews_per_day": average_reviews_per_day,
             },
             "trend": trend_data_list
