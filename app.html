@@ -532,7 +532,8 @@
                 serviceQualitiesContainer.classList.toggle('visible', !!serverSelect.value);
             });
 
-            birthdayEventRadio.addEventListener('change', () => {
+            const occasionRadioGroup = document.querySelector('[data-category="reason_for_visit"]');
+            occasionRadioGroup.addEventListener('change', () => {
                 birthdayDetailsContainer.classList.toggle('visible', birthdayEventRadio.checked);
             });
             
