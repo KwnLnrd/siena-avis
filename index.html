@@ -143,6 +143,7 @@
             display: block;
             text-decoration: none;
             box-sizing: border-box;
+            margin-top: 12px;
         }
 
         .button:hover {
@@ -153,7 +154,6 @@
             background: var(--surface-color);
             color: var(--brand-color);
             border: 1px solid var(--border-color);
-            margin-top: 12px;
         }
 
         .button.secondary:hover {
@@ -219,7 +219,6 @@
     </style>
 </head>
 <body>
-    <!-- Le contenu HTML et le script JavaScript restent identiques -->
     <div class="review-container">
         <div class="language-switcher">
             <button class="lang-btn" data-lang="fr">🇫🇷 FR</button>
@@ -342,11 +341,10 @@
         <div id="result-area" class="hidden">
             <div id="thank-you-message" class="hidden"></div>
             <textarea id="review-text" readonly></textarea>
-            <button id="copy-btn" class="button secondary" data-translate-key="copy_button"></button>
             <a href="https://search.google.com/local/writereview?placeid=ChIJIdvGkX5v5kcRQ1FTWUnyJxo" target="_blank" id="google-btn" class="button" data-translate-key="publish_button"></a>
         </div>
         <footer>
-            &copy; <span id="copyright-year"></span> KwnLnrd. <span data-translate-key="footer_rights"></span>
+            &copy; <span id="copyright-year"></span> Powered by <a href="https://instagram.com/KwnLnrd" target="_blank" style="color: var(--text-secondary); text-decoration: underline;">KwnLnrd</a>. <span data-translate-key="footer_rights"></span>
             <div class="social-icons">
                 <a href="https://www.instagram.com/siena.paris/" target="_blank" title="Instagram">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.069-1.645-.069-4.85s.011-3.584.069-4.85c.149-3.225 1.664-4.771 4.919-4.919C8.416 2.175 8.796 2.163 12 2.163zm0 1.441c-3.149 0-3.505.012-4.73.068-2.793.127-4.057 1.383-4.184 4.184-.056 1.225-.067 1.575-.067 4.73s.011 3.505.067 4.73c.127 2.793 1.383 4.057 4.184 4.184 1.225.056 1.575.067 4.73.067s3.505-.011 4.73-.067c2.793-.127 4.057-1.383 4.184-4.184.056-1.225.067-1.575.067-4.73s-.011-3.505-.067-4.73c-.127-2.793-1.383-4.057-4.184-4.184-1.225-.056-1.575-.068-4.73-.068zm0 3.191c-2.496 0-4.502 2.006-4.502 4.502s2.006 4.502 4.502 4.502 4.502-2.006 4.502-4.502-2.006-4.502-4.502-4.502zm0 7.251c-1.516 0-2.75-1.234-2.75-2.75s1.234-2.75 2.75-2.75 2.75 1.234 2.75 2.75-1.234 2.75-2.75 2.75zm4.92-6.336c-.783 0-1.419.636-1.419 1.419s.636 1.419 1.419 1.419 1.419-.636 1.419-1.419-.636-1.419-1.419-1.419z"/></svg>
@@ -362,7 +360,6 @@
     </div>
     <div id="notification" class="hidden"></div>
     <script>
-        // Le script JavaScript reste inchangé car il gère la fonctionnalité
         document.addEventListener('DOMContentLoaded', () => {
             const translations = {
                 fr: {
@@ -374,11 +371,11 @@
                     occasion_title: "Une occasion spéciale ?", occasion_birthday: "Anniversaire", occasion_romantic: "Dîner romantique", occasion_friends: "Dîner entre amis", occasion_visit: "Simple visite", birthday_who: "C'était l'anniversaire de qui ?", birthday_father: "Père", birthday_mother: "Mère", birthday_husband: "Mari", birthday_wife: "Femme", birthday_son: "Fils", birthday_daughter: "Fille", birthday_friend: "Ami(e)", server_title: "Quel serveur souhaitez-vous féliciter ?", server_choose: "-- Choisissez un prénom --", service_subtitle: "Qu'avez-vous particulièrement apprécié ? (3 choix max)", service_q1: "Attentionné", service_q2: "Souriant", service_q3: "Professionnel", service_q4: "Efficace", service_q5: "De bon conseil", service_q6: "Discret", flavors_title: "Les saveurs qui vous ont marqué", flavors_subtitle: "Choisissez jusqu'à 6 de vos coups de cœur.", atmosphere_title: "L'atmosphère du lieu", atmosphere_subtitle: "Sélectionnez jusqu'à 3 options.",
                     atmosphere_decoration: "La Décoration", atmosphere_music: "La Musique Live", atmosphere_energy: "L'Énergie Festive", atmosphere_lighting: "L'Éclairage Intime", atmosphere_comfort: "Le Confort", atmosphere_photo: "Idéal pour les photos",
                     private_feedback_label: "J'ai une suggestion privée pour l'équipe", private_feedback_placeholder: "Votre suggestion nous aidera à nous améliorer...",
-                    generate_button: "Générer mon avis", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", 
+                    generate_button: "Créer mon message", copy_button: "Copier le texte", publish_button: "Publier mon avis sur Google", footer_rights: "Tous droits réservés.", 
                     loading_messages: ["Contact de notre assistant créatif...","Analyse de votre soirée mémorable...","L'inspiration est en chemin...","Finalisation de la rédaction..."], 
                     alert_no_option: "Veuillez sélectionner au moins une option ou laisser un feedback privé.", alert_quick_review_min: "Veuillez sélectionner au moins un point fort.", 
                     limit_reached: (limit) => `Vous avez atteint la limite de ${limit} options.`,
-                    thank_you_title: "Merci pour votre contribution !", thank_you_instructions: "<strong>Suivez ces 2 étapes :</strong><br>1. Cliquez sur 'Copier le texte'.<br>2. Cliquez sur 'Publier sur Google' et collez votre avis.",
+                    thank_you_title: "Merci pour votre contribution !", thank_you_instructions: "<strong>Suivez ces 2 étapes :</strong><br>1. Le texte a été copié.<br>2. Cliquez sur 'Publier sur Google' et collez votre avis.",
                     loading_options: "Chargement des options...", loading_error: "Erreur de chargement des options."
                 },
                 en: {
@@ -390,11 +387,11 @@
                     occasion_title: "A special occasion?", occasion_birthday: "Birthday", occasion_romantic: "Romantic dinner", occasion_friends: "Dinner with friends", occasion_visit: "Just visiting", birthday_who: "Whose birthday was it?", birthday_father: "Father", birthday_mother: "Mother", birthday_husband: "Husband", birthday_wife: "Wife", birthday_son: "Son", birthday_daughter: "Daughter", birthday_friend: "Friend", server_title: "Which server would you like to praise?", server_choose: "-- Choose a name --", service_subtitle: "What did you particularly appreciate? (3 choices max)", service_q1: "Attentive", service_q2: "Smiling", service_q3: "Professional", service_q4: "Efficient", service_q5: "Great advice", service_q6: "Discreet", flavors_title: "The flavors that stood out", flavors_subtitle: "Choose up to 6 of your favorites.", atmosphere_title: "The atmosphere", atmosphere_subtitle: "Select up to 3 options.",
                     atmosphere_decoration: "The Decoration", atmosphere_music: "Live Music", atmosphere_energy: "Festive Energy", atmosphere_lighting: "Intimate Lighting", atmosphere_comfort: "The Comfort", atmosphere_photo: "Ideal for photos",
                     private_feedback_label: "I have a private suggestion for the team", private_feedback_placeholder: "Your suggestion will help us improve...",
-                    generate_button: "Generate my review", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", 
+                    generate_button: "Create my message", copy_button: "Copy text", publish_button: "Publish review on Google", footer_rights: "All rights reserved.", 
                     loading_messages: ["Contacting our creative assistant...","Analyzing your memorable evening...","Inspiration is on its way...","Finalizing the draft..."], 
                     alert_no_option: "Please select at least one option or leave private feedback.", alert_quick_review_min: "Please select at least one highlight.", 
                     limit_reached: (limit) => `You have reached the limit of ${limit} options.`,
-                    thank_you_title: "Thank you for your contribution!", thank_you_instructions: "<strong>Follow these 2 steps:</strong><br>1. Click 'Copy text'.<br>2. Click 'Publish on Google' and paste your review.",
+                    thank_you_title: "Thank you for your contribution!", thank_you_instructions: "<strong>Follow these 2 steps:</strong><br>1. The text has been copied.<br>2. Click 'Publish on Google' and paste your review.",
                     loading_options: "Loading options...", loading_error: "Error loading options."
                 },
                 es: {
@@ -406,11 +403,11 @@
                     occasion_title: "¿Una ocasión especial?", occasion_birthday: "Cumpleaños", occasion_romantic: "Cena romántica", occasion_friends: "Cena entre amigos", occasion_visit: "Simple visita", birthday_who: "¿De quién era el cumpleaños?", birthday_father: "Padre", birthday_mother: "Madre", birthday_husband: "Esposo", birthday_wife: "Esposa", birthday_son: "Hijo", birthday_daughter: "Hija", birthday_friend: "Amigo(a)", server_title: "¿A qué camarero te gustaría felicitar?", server_choose: "-- Elige un nombre --", service_subtitle: "¿Qué te gustó especialmente? (3 opciones máx.)", service_q1: "Atento", service_q2: "Sonriente", service_q3: "Profesional", service_q4: "Eficiente", service_q5: "Buen consejero", service_q6: "Discreto", flavors_title: "Los sabores que te marcaron", flavors_subtitle: "Elige hasta 6 de tus favoritos.", atmosphere_title: "El ambiente del lugar", atmosphere_subtitle: "Selecciona hasta 3 opciones.",
                     atmosphere_decoration: "La Decoración", atmosphere_music: "Música en Vivo", atmosphere_energy: "Energía Festiva", atmosphere_lighting: "Iluminación Íntima", atmosphere_comfort: "La Comodidad", atmosphere_photo: "Ideal para fotos",
                     private_feedback_label: "Tengo una sugerencia privada para el equipo", private_feedback_placeholder: "Tu sugerencia nos ayudará a mejorar...",
-                    generate_button: "Generar mi opinión", copy_button: "Copiar texto", publish_button: "Publicar en Google", footer_rights: "Todos los derechos reservados.", 
+                    generate_button: "Crear mi mensaje", copy_button: "Copiar texto", publish_button: "Publicar en Google", footer_rights: "Todos los derechos reservados.", 
                     loading_messages: ["Contactando a nuestro asistente...","Analizando tu noche...","La inspiración está en camino...","Finalizando el borrador..."], 
                     alert_no_option: "Por favor, selecciona al menos una opción o deja un comentario privado.", alert_quick_review_min: "Por favor, selecciona al menos un punto fuerte.", 
                     limit_reached: (limit) => `Solo puedes seleccionar hasta ${limit} opciones para "${category}".`,
-                    thank_you_title: "¡Gracias por tu contribución!", thank_you_instructions: "<strong>Sigue estos 2 pasos:</strong><br>1. Haz clic en 'Copiar texto'.<br>2. Haz clic en 'Publicar en Google' y pega tu reseña.",
+                    thank_you_title: "¡Gracias por tu contribución!", thank_you_instructions: "<strong>Sigue estos 2 pasos:</strong><br>1. El texto ha sido copiado.<br>2. Haz clic en 'Publicar en Google' y pega tu reseña.",
                     loading_options: "Cargando opciones...", loading_error: "Error al cargar las opciones."
                 },
                 it: {
@@ -422,11 +419,11 @@
                     occasion_title: "Un'occasione speciale?", occasion_birthday: "Compleanno", occasion_romantic: "Cena romantica", occasion_friends: "Cena tra amici", occasion_visit: "Semplice visita", birthday_who: "Di chi era il compleanno?", birthday_father: "Padre", birthday_mother: "Madre", birthday_husband: "Marito", birthday_wife: "Moglie", birthday_son: "Figlio", birthday_daughter: "Figlia", birthday_friend: "Amico(a)", server_title: "Quale cameriere vorresti elogiare?", server_choose: "-- Scegli un nome --", service_subtitle: "Cosa hai apprezzato in particolare? (max 3 opzioni)", service_q1: "Attento", service_q2: "Sorridente", service_q3: "Professionale", service_q4: "Efficiente", service_q5: "Ottimo consiglio", service_q6: "Discreto", flavors_title: "I sapori che ti hanno colpito", flavors_subtitle: "Scegli fino a 6 dei tuoi preferiti.", atmosphere_title: "L'atmosfera del locale", atmosphere_subtitle: "Seleziona fino a 3 opzioni.",
                     atmosphere_decoration: "La Decorazione", atmosphere_music: "Musica dal Vivo", atmosphere_energy: "Energia Festosa", atmosphere_lighting: "Illuminazione Intima", atmosphere_comfort: "Il Comfort", atmosphere_photo: "Ideale per le foto",
                     private_feedback_label: "Ho un suggerimento privato per il team", private_feedback_placeholder: "Il tuo suggerimento ci aiuterà a migliorare...",
-                    generate_button: "Genera la mia recensione", copy_button: "Copia il testo", publish_button: "Pubblica su Google", footer_rights: "Tutti i diritti riservati.", 
+                    generate_button: "Crea il mio messaggio", copy_button: "Copia il testo", publish_button: "Pubblica su Google", footer_rights: "Tutti i diritti riservati.", 
                     loading_messages: ["Contattando il nostro assistente...","Analizzando la tua serata...","L'ispirazione è in arrivo...","Finalizzando la bozza..."], 
                     alert_no_option: "Seleziona almeno un'opzione o lascia un feedback privato.", alert_quick_review_min: "Seleziona almeno un punto forte.", 
                     limit_reached: (limit) => `Puoi selezionare solo fino a ${limit} opzioni per "${category}".`,
-                    thank_you_title: "Grazie per il tuo contributo!", thank_you_instructions: "<strong>Segui questi 2 passaggi:</strong><br>1. Clicca su 'Copia testo'.<br>2. Clicca su 'Pubblica su Google' e incolla la tua recensione.",
+                    thank_you_title: "Grazie per il tuo contributo!", thank_you_instructions: "<strong>Segui questi 2 passaggi:</strong><br>1. Il testo è stato copiato.<br>2. Clicca su 'Pubblica su Google' e incolla la tua recensione.",
                     loading_options: "Caricamento opzioni...", loading_error: "Errore nel caricamento delle opzioni."
                 },
                 pt: {
@@ -438,11 +435,11 @@
                     occasion_title: "Uma ocasião especial?", occasion_birthday: "Aniversário", occasion_romantic: "Jantar romântico", occasion_friends: "Jantar entre amigos", occasion_visit: "Simples visita", birthday_who: "De quem era o aniversário?", birthday_father: "Pai", birthday_mother: "Mãe", birthday_husband: "Marido", birthday_wife: "Esposa", birthday_son: "Filho", birthday_daughter: "Filha", birthday_friend: "Amigo(a)", server_title: "Qual empregado gostaria de elogiar?", server_choose: "-- Escolha um nome --", service_subtitle: "O que apreciou particularmente? (máx. 3 opções)", service_q1: "Atencioso", service_q2: "Sorridente", service_q3: "Profissional", service_q4: "Eficiente", service_q5: "Bons conselhos", service_q6: "Discreto", flavors_title: "Os sabores que o marcaram", flavors_subtitle: "Escolha até 6 dos seus favoritos.", atmosphere_title: "A atmosfera do local", atmosphere_subtitle: "Selecione até 3 opções.",
                     atmosphere_decoration: "A Decoração", atmosphere_music: "Música ao Vivo", atmosphere_energy: "A Energia Festiva", atmosphere_lighting: "A Iluminação Íntima", atmosphere_comfort: "O Conforto", atmosphere_photo: "Ideal para fotos",
                     private_feedback_label: "Tenho uma sugestão privada para a equipa", private_feedback_placeholder: "A sua sugestão vai ajudar-nos a melhorar...",
-                    generate_button: "Gerar a minha avaliação", copy_button: "Copiar texto", publish_button: "Publicar avaliação no Google", footer_rights: "Todos os direitos reservados.",
+                    generate_button: "Criar minha mensagem", copy_button: "Copiar texto", publish_button: "Publicar avaliação no Google", footer_rights: "Todos os direitos reservados.",
                     loading_messages: ["A contactar o nosso assistente criativo...","A analisar a sua noite memorável...","A inspiração está a caminho...","A finalizar o rascunho..."],
                     alert_no_option: "Por favor, selecione pelo menos uma opção ou deixe um feedback privado.", alert_quick_review_min: "Por favor, selecione pelo menos um ponto forte.",
                     limit_reached: (limit) => `Atingiu o limite de ${limit} opções.`,
-                    thank_you_title: "Obrigado pela sua contribuição!", thank_you_instructions: "<strong>Siga estes 2 passos:</strong><br>1. Clique em 'Copiar texto'.<br>2. Clique em 'Publicar no Google' e cole a sua avaliação.",
+                    thank_you_title: "Obrigado pela sua contribuição!", thank_you_instructions: "<strong>Siga estes 2 passos:</strong><br>1. O texto foi copiado.<br>2. Clique em 'Publicar no Google' e cole a sua avaliação.",
                     loading_options: "A carregar opções...", loading_error: "Erro ao carregar as opções."
                 },
                 zh: {
@@ -456,11 +453,11 @@
                     flavors_title: "给您留下深刻印象的风味", flavors_subtitle: "选择最多6个您的最爱。", atmosphere_title: "现场气氛", atmosphere_subtitle: "选择最多3个选项。",
                     atmosphere_decoration: "装饰", atmosphere_music: "现场音乐", atmosphere_energy: "节日活力", atmosphere_lighting: "私密照明", atmosphere_comfort: "舒适", atmosphere_photo: "适合拍照",
                     private_feedback_label: "我有一个给团队的私人建议", private_feedback_placeholder: "您的建议将帮助我们改进...",
-                    generate_button: "生成我的评论", copy_button: "复制文本", publish_button: "在谷歌上发布评论", footer_rights: "版权所有。",
+                    generate_button: "创建我的消息", copy_button: "复制文本", publish_button: "在谷歌上发布评论", footer_rights: "版权所有。",
                     loading_messages: ["正在联系我们的创意助理...","正在分析您难忘的夜晚...","灵感正在路上...","正在完成草稿..."],
                     alert_no_option: "请至少选择一个选项或留下私人反馈。", alert_quick_review_min: "请至少选择一个亮点。",
                     limit_reached: (limit) => `您已达到${limit}个选项的限制。`,
-                    thank_you_title: "感谢您的贡献！", thank_you_instructions: "<strong>请按照以下两个步骤操作：</strong><br>1. 点击“复制文本”。<br>2. 点击“在谷歌上发布”并粘贴您的评论。",
+                    thank_you_title: "感谢您的贡献！", thank_you_instructions: "<strong>请按照以下两个步骤操作：</strong><br>1. 文本已复制。<br>2. 点击“在谷歌上发布”并粘贴您的评论。",
                     loading_options: "加载选项...", loading_error: "加载选项时出错。"
                 }
             };
@@ -472,7 +469,7 @@
             const serviceQualitiesContainer = document.getElementById('service-qualities-container');
             const birthdayEventRadio = document.getElementById('event_birthday');
             const birthdayDetailsContainer = document.getElementById('birthday_details_container');
-            const copyBtn = document.getElementById('copy-btn');
+            const googleBtn = document.getElementById('google-btn');
             const reviewText = document.getElementById('review-text');
             const generateBtn = document.getElementById('generate-btn');
             const loader = document.getElementById('loader');
@@ -730,8 +727,7 @@
                     } else {
                         thankYouMessage.innerHTML = `<h4>${getTranslation('thank_you_title')}</h4>`;
                         thankYouMessage.classList.remove('hidden');
-                        document.getElementById('copy-btn').classList.add('hidden');
-                        document.getElementById('google-btn').classList.add('hidden');
+                        googleBtn.classList.add('hidden');
                         reviewText.classList.add('hidden');
                     }
 
@@ -744,10 +740,12 @@
                 }
             });
 
-            copyBtn.addEventListener('click', () => {
-                reviewText.select();
-                document.execCommand('copy');
-                showNotification('Texte copié !');
+            googleBtn.addEventListener('click', () => {
+                if (reviewText.value) {
+                    reviewText.select();
+                    document.execCommand('copy');
+                    showNotification('Texte copié !');
+                }
             });
 
             // --- Initialisation de la page ---
